@@ -1,0 +1,48 @@
+#!./edcltool
+
+
+-- Инициализируем edcl
+edcl_init();
+-- edcl_write(1,0x40000000,0x38);
+
+n = edcl_write(4,0x40000000,100500);
+n = edcl_read(4,0x40000000);
+print(n);
+
+n = edcl_read(1,0x40000001);
+print(n);
+n = edcl_read(1,0x40000004);
+print( n);
+
+
+print("Waiting for value")
+edcl_wait(1,0x40000000,0xff);
+
+
+-- Записать 1 байт (0x34) в 0x10000 
+---edcl_write(1,0x10000,0x34);
+-- Записать 2 байта (little endian) (0x3432) в 0x10000 
+--edcl_write(2,0x10000,0x3432);
+-- Записать 4 байта (little endian) (0x34323432) в 0x10000 
+--edcl_write(4,0x10000,0x3432);
+-- Записать последовательность байт в 0x10000 
+--edcl_write(0,0x10000,"DEADBEAFDEADDEAF1616");
+
+
+-- Аналогично чтение. 
+reg32 = edcl_read(4,0x1000);
+if (reg32 == 100500) then
+   print("У нас ожидаемое значение!")
+end
+
+-- Аналогично можно ожидать появления значения в памяти
+-- для 1 2 и 4 байт
+
+edcl_wait(1,0x1000,0x32);
+
+-- Загрузка файлов в память
+-- edcl_upload(0x1000, "/tmp/uboot.bin");
+
+-- Снятие дампа памяти
+--- len=0x40000
+--- edcl_download(0x1000, "/tmp/dump.bin", len);
