@@ -49,6 +49,7 @@ static int l_edcl_init (lua_State *L) {
 }
 
 static int l_edcl_write (lua_State *L) {
+	
 	int argc = lua_gettop(L);
 	if (argc!=3)
 		printf("FATAL: incorrect number of args to edlc_write\n"),exit(EXIT_FAILURE);
@@ -97,8 +98,14 @@ static int l_edcl_write (lua_State *L) {
 		printf("unsupported write op for edcl_write\n");
 		exit(EXIT_FAILURE);
 	}
+
 //	printf("%d bytes to %x done with %d\n", bytes, addr, ret);
-	int value = lua_tonumber(L, 3);
+	if (ret == -1) {
+		printf("Ooops: edcl_write returned -1, restarting edcl\n");
+		edcl_init(default_iface, default_baddr, default_saddr);
+		return l_edcl_write(L);;
+	}
+	
 	return 0;  /* number of results */
 }
 
@@ -125,26 +132,31 @@ static int l_edcl_wait (lua_State *L) {
 	unsigned int v32;
 	unsigned short v16;
 	unsigned char v8;
-	int found = 0;
+	int ret = 0;
 	while (1)
 	{
 		switch (bytes)
 		{
 		case 1:
-			edcl_read(addr, &v8, 1);
+			ret = edcl_read(addr, &v8, 1);
 			if (v8 == (unsigned char) expected) return 0;
 			break;
 		case 2:
-			edcl_read(addr, &v16, 2);
+			ret = edcl_read(addr, &v16, 2);
 			if (v16 == (unsigned short) expected) return 0;
 			break;
 		case 4:
-			edcl_read(addr, &v32, 4);
+			ret = edcl_read(addr, &v32, 4);
 			if (v32 == (unsigned int) expected) return 0;
 			break;
 		default:
 			printf("FATAL: unexpected op to edcl_wait\b"); 
 			exit(EXIT_FAILURE);
+		}
+		if (ret == -1)
+		{
+			//	printf("oops, restarting edcl..\n");
+			edcl_init(default_iface, default_baddr, default_saddr);
 		}
 		usleep(poll_interval);
 	}
@@ -208,14 +220,21 @@ static int l_edcl_upload (lua_State *L) {
 	unsigned int sz = (unsigned int) buf.st_size;
 	printf("Filesize: %d bytes\n", sz);
 	FILE* fd = fopen(filename, "r");
-	char tmp[ETH_FRAME_LEN/2];
-	int n; 
+	char tmp[128];
+	int n, k; 
 	int maxsz = sz;
 	fflush(stdout);
 	while (sz)
 	{
-		n = fread(tmp, 1, ETH_FRAME_LEN/2, fd);
-		edcl_write(addr, tmp, n);
+		n = fread(tmp, 1, 128, fd);
+	retry:
+		k = edcl_write(addr, tmp, n);
+		if (k<0) 
+		{
+			edcl_init(default_iface, default_baddr, default_saddr);
+			goto retry;
+		}
+
 		addr+=n;
 		sz-=n;
 		display_progressbar(maxsz,sz);
