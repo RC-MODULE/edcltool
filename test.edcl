@@ -1,6 +1,11 @@
 #!./edcltool
 
 
+-- Справка о параметрах флаг 
+-- имя_скрипта -h
+-- пример запуска скрипта: 
+-- ./scriptname -i eth1
+
 -- Инициализируем edcl
 edcl_init();
 -- edcl_write(1,0x40000000,0x38);
@@ -15,18 +20,38 @@ n = edcl_read(1,0x40000004);
 print( n);
 
 
-print("Waiting for value")
-edcl_wait(1,0x40000000,0xff);
+-- Установка частоты опроса регистров для edcl_wait
+-- Значение задается в микросекундах
+
+edcl_poll_interval(100000);
+
+
+edcl_write(0, 0x40000000, "deadbeef");
+n = edcl_upload(0x40000002, "/etc/resolv.conf");
+
+len=16000000
+edcl_download(0x40000000, "/tmp/dump.bin", len);
+
+print("Upload done with "..n)
+
+
+function reset_board()
+   edcl_write(0, 0x1000, "DEADBEEFFEFEFE");
+end
+
 
 
 -- Записать 1 байт (0x34) в 0x10000 
----edcl_write(1,0x10000,0x34);
+edcl_write(1 , 0x10000 , 0x34);
+
 -- Записать 2 байта (little endian) (0x3432) в 0x10000 
---edcl_write(2,0x10000,0x3432);
+
+edcl_write(2,0x10000,0x3432);
+
 -- Записать 4 байта (little endian) (0x34323432) в 0x10000 
---edcl_write(4,0x10000,0x3432);
+-- edcl_write(4,0x10000,0x3432);
 -- Записать последовательность байт в 0x10000 
---edcl_write(0,0x10000,"DEADBEAFDEADDEAF1616");
+-- edcl_write(0,0x10000,"DEADBEAFDEADDEAF1616");
 
 
 -- Аналогично чтение. 
@@ -38,10 +63,10 @@ end
 -- Аналогично можно ожидать появления значения в памяти
 -- для 1 2 и 4 байт
 
-edcl_wait(1,0x1000,0x32);
+--edcl_wait(1,0x1000,0x32);
 
 -- Загрузка файлов в память
--- edcl_upload(0x1000, "/tmp/uboot.bin");
+
 
 -- Снятие дампа памяти
 --- len=0x40000
