@@ -1,0 +1,17 @@
+#!/usr/local/bin/edcltool
+print('Will now debrick your board...');
+edcl_init();
+edcl_upload(0x00100010, "mboot.bin");
+print('Executing image..')
+edcl_write(4,0x00100000,0xdeadc0de);
+edcl_write(4,0x00100010,0x00100014);
+print('Waiting for board to respond');
+edcl_wait(4,0x00100000,0xb00bc0de);
+print('Sending image');
+edcl_upload(0x40100010, "mboot.bin");
+edcl_write(4,0x00100000,0xdeadbeaf);
+print('Waiting for the board to flash it');
+edcl_wait(4,0x00100000,0x1EAFFEEF);
+print("That's it, have a nice day")
+
+

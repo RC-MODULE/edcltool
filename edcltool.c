@@ -9,7 +9,8 @@
 #include <net/ethernet.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
-
+#include <readline/readline.h>
+#include <readline/history.h>
 #include "edcl.h"
 
 #define CHECK() printf("Current stack top:  %d (%s:%d)\n", lua_gettop(L),__FILE__, __LINE__);
@@ -29,6 +30,7 @@ void usage(char* app)
 		"-i interface\t Use interface (default - eth0) \n"
 		"-b address \t Specify board address (default - 192.168.0.0) \n"
 		"-s address \t Specify self address (default - 192.168.0.1) \n"
+		"-t \t Enter interactive terminal mode \n"
 		"-h\t This help \n"
 		"See SCRIPTING.TXT for avaliable lua functions\n"
 		"(c) Andrew Andrianov <andrianov@module.ru> @ RC Module 2012\n", app
@@ -329,6 +331,33 @@ void bind_edcl_functions(lua_State* L){
 }
 
 
+#ifdef HAVE_INTERACTIVE
+void interactive_loop(lua_State* L) {
+
+	char* input, shell_prompt[100];
+	for(;;)
+	{
+		snprintf(shell_prompt, sizeof(shell_prompt), "edcl # " );
+		input = readline(shell_prompt);
+		if (input==NULL)
+			break;
+		rl_bind_key('\t', rl_complete);
+		add_history(input);
+		int error = luaL_loadbuffer(L, input, strlen(input), "shell") ||
+			lua_pcall(L, 0, 0, 0);
+		report_errors(L,error);
+ 
+		free(input);
+	}
+}
+#else
+interactive_loop(lua_State* L) {
+	printf("Interactive mode inhibited at compile-time\n");
+}
+
+#endif
+
+
 #define PROGNAME "edcltool"
 int main(int argc, char** argv) {
 	
@@ -340,18 +369,16 @@ int main(int argc, char** argv) {
 	if (argc<2){
 		usage(argv[0]);
 	}
-	char* tmp = strdup(argv[1]);
-	
-	if ((0 != access(tmp,R_OK) || (0 == strcmp(PROGNAME, basename(tmp))))){
-		/* Not running as interpreter */
-		fprintf(stderr, "Please run this tool as interpreter for edcl script\n");
-		fprintf(stderr, "See SCRIPTING.TXT for manual\n");
-		usage(argv[0]);
-		exit(EXIT_FAILURE);
-	} 
-	
-	while ((opt = getopt(argc, argv, "hi:s:b:")) != -1) {
+	const char* file = NULL;
+	int term = 0;
+	while ((opt = getopt(argc, argv, "thi:s:b:f:")) != -1) {
                 switch (opt) {
+		case 'f':
+			file = optarg;
+			break;
+		case 't':
+			term=1;
+			break;
 		case 'i':
 			default_iface = optarg;
 			break;
@@ -366,16 +393,18 @@ int main(int argc, char** argv) {
 			usage(argv[0]);
 		}
 	};
+	printf("Loading edcl script: %s\n", file);
+        int s = luaL_loadfile(L, file);
 	
-	printf("Loading edcl script: %s\n", tmp);
-        int s = luaL_loadfile(L, tmp);
         printf("Done with result %d\n", s);
         if ( s==0 ) {
                 s = lua_pcall(L, 0, LUA_MULTRET, 0);
-		if ( s!=0 ) report_errors(L, s);
-		return s;
+		if ( s!=0 ) 
+			report_errors(L, s);
         }
         report_errors(L, s);
+	if (term)
+		interactive_loop(L);
 	return 1;
 	
 

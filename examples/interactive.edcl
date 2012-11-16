@@ -1,0 +1,3 @@
+#!./edcltool -t
+
+print("Entering interactive mode")
