@@ -3,7 +3,8 @@ print('Will now debrick your board...');
 edcl_init();
 edcl_upload(0x00100010, "mboot-uemd.bin");
 print('Executing image..')
-edcl_write(4,0x00100000,0xdeadc0de);
+
+edcl_write(4,0x00100000,0x1eafc0de);
 edcl_write(4,0x00100010,0x00100014);
 print('Waiting for board to respond');
 edcl_wait(4,0x00100000,0xb00bc0de);
