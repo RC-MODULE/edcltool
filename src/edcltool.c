@@ -50,6 +50,17 @@ static int l_edcl_init (lua_State *L) {
 	return 0;  /* number of results */
 }
 
+
+static int l_edcl_writestring (lua_State *L) {
+	int argc = lua_gettop(L);
+	if (argc!=2)
+		printf("FATAL: incorrect number of args to edlc_write\n"),exit(EXIT_FAILURE);
+	unsigned int addr = lua_tonumber(L, 1);
+	const char* hexstr = lua_tostring(L, 2);
+	edcl_write(addr, hexstr, strlen(hexstr)+1);	
+	return 0;
+}
+
 static int l_edcl_write (lua_State *L) {
 	
 	int argc = lua_gettop(L);
@@ -96,6 +107,7 @@ static int l_edcl_write (lua_State *L) {
 		v32 = (unsigned int) lua_tonumber(L,3);
 		ret =edcl_write(addr, &v32, bytes);
 		break;
+		
 	default:
 		printf("unsupported write op for edcl_write\n");
 		exit(EXIT_FAILURE);
@@ -116,13 +128,12 @@ static int l_edcl_write (lua_State *L) {
 static int poll_interval = 100000;
 
 static int l_edcl_setwait(lua_State *L) {
-	int argc = lua_gettop(L);
-	if (argc!=1)
-		printf("FATAL: incorrect number of args to edlc_poll_interval\n"),exit(EXIT_FAILURE);
-	poll_interval = lua_tonumber(L, 1);
-	return 0;
+       int argc = lua_gettop(L);
+       if (argc!=1)
+               printf("FATAL: incorrect number of args to edlc_poll_interval\n"),exit(EXIT_FAILURE);
+       poll_interval = lua_tonumber(L, 1);
+       return 0;
 }
-
 
 static int l_edcl_wait (lua_State *L) {
 	int argc = lua_gettop(L);
@@ -327,7 +338,9 @@ void bind_edcl_functions(lua_State* L){
 	lua_pushcfunction(L, l_edcl_download);
 	lua_setglobal(L, "edcl_download");	
 	lua_pushcfunction(L, l_edcl_hexdump);
-	lua_setglobal(L, "edcl_hexdump");	
+	lua_setglobal(L, "edcl_hexdump");
+	lua_pushcfunction(L, l_edcl_writestring);
+	lua_setglobal(L, "edcl_writestring");
 }
 
 

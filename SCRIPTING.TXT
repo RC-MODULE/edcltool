@@ -43,6 +43,14 @@ value при этом должно быть СТРОКОЙ, представля
 edcl_write(0 , 0x10000 , "DEADBEEF0000FFFE");
 
 
+edcl_writestring(addr, "string");
+
+Запись С строки вместе с терминирующим 0x00 байтом по адресу в памяти. 
+
+Пример: 
+edcl_writestring(0 , 0x10000 , "Hello, world");
+
+
 Аналогично реализовано чтение значений из памяти. 
 value = edcl_read(type,address);
 
