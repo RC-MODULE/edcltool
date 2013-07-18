@@ -135,6 +135,48 @@ static int l_edcl_setwait(lua_State *L) {
        return 0;
 }
 
+
+static int l_edcl_nwait (lua_State *L) {
+	int argc = lua_gettop(L);
+	if (argc!=3)
+		printf("FATAL: incorrect number of args to edlc_wait\n"),exit(EXIT_FAILURE);
+	int bytes = lua_tonumber(L, 1);
+	unsigned int addr = lua_tonumber(L, 2);
+	unsigned int expected = lua_tonumber(L, 3);
+	unsigned int v32;
+	unsigned short v16;
+	unsigned char v8;
+	int ret = 0;
+	while (1)
+	{
+		switch (bytes)
+		{
+		case 1:
+			ret = edcl_read(addr, &v8, 1);
+			if (v8 != (unsigned char) expected) return 0;
+			break;
+		case 2:
+			ret = edcl_read(addr, &v16, 2);
+			if (v16 != (unsigned short) expected) return 0;
+			break;
+		case 4:
+			ret = edcl_read(addr, &v32, 4);
+			if (v32 != (unsigned int) expected) return 0;
+			break;
+		default:
+			printf("FATAL: unexpected op to edcl_wait\b"); 
+			exit(EXIT_FAILURE);
+		}
+		if (ret == -1)
+		{
+			edcl_init(default_iface, default_baddr, default_saddr);
+		}
+		usleep(poll_interval);
+	}
+	return 0;
+}
+
+
 static int l_edcl_wait (lua_State *L) {
 	int argc = lua_gettop(L);
 	if (argc!=3)
@@ -175,6 +217,7 @@ static int l_edcl_wait (lua_State *L) {
 	}
 	return 0;
 }
+
 
 
 static int l_edcl_read (lua_State *L) {
@@ -329,6 +372,8 @@ void bind_edcl_functions(lua_State* L){
 	lua_setglobal(L, "edcl_write");	
 	lua_pushcfunction(L, l_edcl_wait);
 	lua_setglobal(L, "edcl_wait");	
+	lua_pushcfunction(L, l_edcl_nwait);
+	lua_setglobal(L, "edcl_nwait");	
 	lua_pushcfunction(L, l_edcl_read);
 	lua_setglobal(L, "edcl_read");		
 	lua_pushcfunction(L, l_edcl_setwait);

@@ -1,4 +1,18 @@
 #!/usr/local/bin/edcltool
+
+function uboot_cmd(addr, cmd)
+   print("Running: "..cmd);
+   edcl_writestring(addr, cmd);
+   edcl_write(4,0x00100000,0xdeadbeaf);
+   edcl_nwait(4,0x00100000,0xdeadbeaf);
+end
+
+update_cmds = {
+   "mtd scrub 0 0x80000;",
+   "mtd write 0x40100000 0x0 0x40000",
+};
+
+
 print('Will now debrick your board...');
 edcl_init();
 edcl_upload(0x00100010, "mboot-uemd.bin");
@@ -6,12 +20,16 @@ print('Executing image..')
 edcl_write(4,0x00100000,0xdeadc0de);
 edcl_write(4,0x00100010,0x00100014);
 print('Waiting for board to respond');
-edcl_wait(4,0x00100000,0xb00bc0de);
-print('Sending image');
-edcl_upload(0x40100000, "mboot-signed.bin");
-edcl_write(4,0x00100000,0xdeadbeaf);
-print('Waiting for the board to flash it');
-edcl_wait(4,0x00100000,0x1EAFFEEF);
-print("That's it, have a nice day")
+edcl_nwait(4,0x00100000,0xdeadc0de);
+addr = edcl_read(4,0x00100000);
 
+edcl_upload(0x40100000, "mboot-signed.bin");
+
+print('Bootloader now in slave mode, running update');
+
+for j,k in ipairs(update_cmds) do
+   uboot_cmd(addr, k); 
+end
+
+print("Bootloader update complete, reboot board now");
 
