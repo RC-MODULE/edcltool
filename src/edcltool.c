@@ -11,7 +11,7 @@
 #include <net/if.h>
 #include <readline/readline.h>
 #include <readline/history.h>
-#include "edcl.h"
+#include <edcl.h>
 
 #define CHECK() printf("Current stack top:  %d (%s:%d)\n", lua_gettop(L),__FILE__, __LINE__);
 

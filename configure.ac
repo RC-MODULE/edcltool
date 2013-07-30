@@ -3,6 +3,7 @@ AC_INIT([edcltool], [0.1], [andrew@ncrmnt.org])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_CONFIG_HEADERS([config.h])
 AC_C_INLINE
+LT_INIT
 
 # Checks for programs.
 AC_PROG_CC
@@ -27,7 +28,8 @@ AC_FUNC_MALLOC
 AC_CHECK_FUNCS([bzero gettimeofday memset strchr strdup strncasecmp strtoul])
 
 AC_CONFIG_FILES([Makefile
-                 src/Makefile])
+                 src/Makefile
+		 libedcl-1.0.pc])
 
 found_lua=no
 
