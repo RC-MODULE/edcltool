@@ -55,8 +55,10 @@ PKG_CHECK_MODULES([lua51], [lua5.1],
 )
 
 if test $found_lua = no; then
-    AC_MSG_ERROR([Couldn't find any lua of use. Sorry])
+    AC_MSG_WARN([Couldn't find any lua of use. Will not build edcltool])
 fi
+
+AM_CONDITIONAL([BUILD_EDCLTOOL], [test x$found_lua = xyes])
 
 if test $have_lua = yes; then
    LUA_CFLAGS=$lua_CFLAGS

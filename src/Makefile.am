@@ -3,15 +3,17 @@ libedcl_1_0_la_SOURCES = edcl.c
 libedcl_1_0_la_includedir=$(includedir)/edcl-1.0/
 libedcl_1_0_la_include_HEADERS = edcl.h
 
-bin_cflags = $(AMCFLAGS) $(LUA_CFLAGS)
-bin_ldadd = $(LUA_LIBS) -lpthread libedcl-1.0.la
+bin_cflags = $(AMCFLAGS)
+bin_ldadd = -lpthread libedcl-1.0.la
 
 bin_PROGRAMS=
 
+if BUILD_EDCLTOOL
 bin_PROGRAMS += edcltool
-edcltool_LDADD = $(bin_ldadd)
-edcltool_CPPFLAGS = $(bin_cflags)
+edcltool_LDADD = $(bin_ldadd) $(LUA_LIBS)
+edcltool_CPPFLAGS = $(bin_cflags) $(LUA_CFLAGS)
 edcltool_SOURCES = edcltool.c
+endif
 
 bin_PROGRAMS += edcl_write
 edcl_write_LDADD = $(bin_ldadd)
