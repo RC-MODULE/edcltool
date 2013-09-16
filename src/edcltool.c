@@ -247,18 +247,78 @@ static int l_edcl_read (lua_State *L) {
 	
 }
 
+#define MAX_PAYLOAD 456
 
 static void display_progressbar(int max, int value){
-	int percent = 100 - value * 100 / max; 
-	//int step = max / 100;
-	//int steps = value / step;
+	float percent = 100.0 - (float) value * 100.0 / (float) max; 
 	int i;
 
-	printf("\r %d %% done | ", percent);
-	for (i=0; i<percent; i++)
+	printf("\r %.02f %% done | ", percent);
+	for (i=0; i< (int) percent; i++)
 		printf("#");
 	fflush(stdout);
 }
+
+
+
+static int l_edcl_upload_chunk (lua_State *L) {
+	int argc = lua_gettop(L);
+
+	if (argc!=4)
+		printf("FATAL: incorrect number of args to edlc_upload\n"),exit(EXIT_FAILURE);	
+
+	unsigned int addr = lua_tonumber(L, 1);
+	char* filename = lua_tostring(L, 2);
+	unsigned int offset = lua_tonumber(L, 3);
+	unsigned int len = lua_tonumber(L, 4);
+
+	if (0!=access(filename, R_OK)) {
+		lua_pushnumber(L, -1);
+		return 1;
+	}
+
+	struct stat buf;
+	stat(filename, &buf);
+	unsigned int sz = (unsigned int) buf.st_size;
+	FILE* fd = fopen(filename, "r");
+	char tmp[2048];
+	int n, k; 
+	int maxsz = sz;
+	int written=0;
+	fseek(fd, offset, SEEK_SET);
+	sz -= offset;
+	if (sz > len)
+		sz = len;
+	while (sz)
+	{
+		n = fread(tmp, 1, (sz > MAX_PAYLOAD) ? MAX_PAYLOAD : sz, fd);
+		if (n<=0)
+			break;
+	retry:
+		k = edcl_write(addr, tmp, n);
+		//printf("write %x %d %d\n", addr, n, sz);
+		if (k<0) 
+		{
+			edcl_init(default_iface, default_baddr, default_saddr);
+			goto retry;
+		}
+
+		addr+=n;
+		sz-=n;
+		written += n;
+		display_progressbar(maxsz, maxsz - offset);
+		//	sleep(1);
+	}
+
+	if (offset + written == maxsz) { 
+		display_progressbar(maxsz, 0);
+		printf(" | done\n");
+	}
+	fclose(fd);
+	lua_pushnumber(L, written);
+	return 1;
+}
+
 
 static int l_edcl_upload (lua_State *L) {
 	int argc = lua_gettop(L);
@@ -276,13 +336,13 @@ static int l_edcl_upload (lua_State *L) {
 	unsigned int sz = (unsigned int) buf.st_size;
 	printf("Filesize: %d bytes\n", sz);
 	FILE* fd = fopen(filename, "r");
-	char tmp[128];
+	char tmp[2048];
 	int n, k; 
 	int maxsz = sz;
 	fflush(stdout);
 	while (sz)
 	{
-		n = fread(tmp, 1, 128, fd);
+		n = fread(tmp, 1, MAX_PAYLOAD, fd);
 	retry:
 		k = edcl_write(addr, tmp, n);
 		if (k<0) 
@@ -295,8 +355,10 @@ static int l_edcl_upload (lua_State *L) {
 		sz-=n;
 		display_progressbar(maxsz,sz);
 	}
-	printf("\nUpload complete\n");
+	display_progressbar(maxsz, 0);
+	printf(" | done\n");
 	lua_pushnumber(L,0);
+	fclose(fd);
 	return 1;
 }
 
@@ -311,13 +373,13 @@ static int l_edcl_download (lua_State *L) {
 	printf("Downloading 0x%X-0x%X to %s\n", addr, addr+sz, filename);
 	printf("Filesize: %d bytes\n", sz);
 	FILE* fd = fopen(filename, "w+");
-	char tmp[128];
+	char tmp[2048];
 	int n,i=0; 
 	fflush(stdout);
 	int maxsz = sz;
 	while (sz)
 	{
-		n = (sz >= 128) ? 128 : sz;
+		n = (sz >= MAX_PAYLOAD) ? MAX_PAYLOAD : sz;
 		int k = edcl_read(addr, tmp, n);
 		fwrite(tmp, 1, n, fd);
 		addr+=n;
@@ -326,6 +388,7 @@ static int l_edcl_download (lua_State *L) {
 	}
 	printf("\n Download complete \n");
 	lua_pushnumber(L,0);
+	fclose(fd);
 	return 1;
 }
 
@@ -386,6 +449,8 @@ void bind_edcl_functions(lua_State* L){
 	lua_setglobal(L, "edcl_hexdump");
 	lua_pushcfunction(L, l_edcl_writestring);
 	lua_setglobal(L, "edcl_writestring");
+	lua_pushcfunction(L, l_edcl_upload_chunk);
+	lua_setglobal(L, "edcl_upload_chunk");
 }
 
 

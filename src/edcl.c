@@ -220,6 +220,9 @@ int edcl_write(unsigned int address, const void* ibuf, size_t len) {
 
 	if(len > ETH_FRAME_LEN - sizeof(struct Hdr)) {
 		errno = EINVAL;
+		fprintf(stderr, "payload too large: %zu (%d - %d)",
+			len, ETH_FRAME_LEN, sizeof(struct Hdr)
+			);
 		return -1;
 	}
 
