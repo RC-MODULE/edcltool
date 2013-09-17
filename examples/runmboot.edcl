@@ -1,8 +1,0 @@
-#!/usr/local/bin/edcltool
-print('Will now start mboot from ram...');
-edcl_init();
-edcl_upload(0x00100000, "mboot-signed.bin");
-print('Executing image..')
-edcl_write(4,0x00100010,0x00100014);
-print("Mboot should be running now")
-
