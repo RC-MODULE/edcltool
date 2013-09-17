@@ -481,6 +481,11 @@ interactive_loop(lua_State* L) {
 #endif
 
 
+const char setup_paths[] =						\
+	"package.path = '" LUAEXT_PREFIX "/?.lua;'..package.path\n" ;
+
+#warning LUAEXT_PREFIX
+
 #define PROGNAME "edcltool"
 int main(int argc, char** argv) {
 	
@@ -516,6 +521,10 @@ int main(int argc, char** argv) {
 			usage(argv[0]);
 		}
 	};
+
+	luaL_loadbuffer(L, setup_paths, strlen(setup_paths), "shell") ||
+		lua_pcall(L, 0, 0, 0);
+
 	printf("Loading edcl script: %s\n", file);
         int s = luaL_loadfile(L, file);
 	

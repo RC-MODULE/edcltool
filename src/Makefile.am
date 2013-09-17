@@ -1,3 +1,5 @@
+AM_CFLAGS= -D 'LUAEXT_PREFIX="@datadir@/edcltool/lib"' 
+
 lib_LTLIBRARIES = libedcl-1.0.la
 libedcl_1_0_la_SOURCES = edcl.c
 libedcl_1_0_la_includedir=$(includedir)/edcl-1.0/
@@ -30,3 +32,10 @@ edcl_test_LDADD = $(bin_ldadd)
 edcl_test_CPPFLAGS = $(bin_cflags)
 edcl_test_SOURCES = edcl_test.c
 
+
+install-exec-hook:
+	@echo    "#### Setting SUID for edcltool. ####"
+	@ls -l $(DESTDIR)$(bindir)/edcltool
+	@chmod 4755 $(DESTDIR)$(bindir)/edcltool
+	@ls -l $(DESTDIR)$(bindir)/edcltool
+	@echo    "####-------------------------------####"
