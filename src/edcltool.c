@@ -39,12 +39,9 @@ void usage(char* app)
 }
 
 static	char* default_iface = "eth0";
-static  char* default_baddr = "192.168.0.0";
-static 	char* default_saddr = "192.168.0.1";
-
 
 static int l_edcl_init (lua_State *L) {
-	int r = edcl_init(default_iface, default_baddr, default_saddr);
+	int r = edcl_init(default_iface);
 	if (-1==r)
 		perror("edcl_init:"), exit(EXIT_FAILURE);
 	return 0;  /* number of results */
@@ -116,7 +113,7 @@ static int l_edcl_write (lua_State *L) {
 //	printf("%d bytes to %x done with %d\n", bytes, addr, ret);
 	if (ret == -1) {
 		printf("Ooops: edcl_write returned -1, restarting edcl\n");
-		edcl_init(default_iface, default_baddr, default_saddr);
+		edcl_init(default_iface);
 		return l_edcl_write(L);;
 	}
 	
@@ -169,7 +166,7 @@ static int l_edcl_nwait (lua_State *L) {
 		}
 		if (ret == -1)
 		{
-			edcl_init(default_iface, default_baddr, default_saddr);
+			edcl_init(default_iface);
 		}
 		usleep(poll_interval);
 	}
@@ -211,7 +208,7 @@ static int l_edcl_wait (lua_State *L) {
 		if (ret == -1)
 		{
 			//	printf("oops, restarting edcl..\n");
-			edcl_init(default_iface, default_baddr, default_saddr);
+			edcl_init(default_iface);
 		}
 		usleep(poll_interval);
 	}
@@ -247,7 +244,6 @@ static int l_edcl_read (lua_State *L) {
 	
 }
 
-#define MAX_PAYLOAD 456
 
 static void display_progressbar(int max, int value){
 	float percent = 100.0 - (float) value * 100.0 / (float) max; 
@@ -291,7 +287,7 @@ static int l_edcl_upload_chunk (lua_State *L) {
 		sz = len;
 	while (sz)
 	{
-		n = fread(tmp, 1, (sz > MAX_PAYLOAD) ? MAX_PAYLOAD : sz, fd);
+		n = fread(tmp, 1, (sz > edcl_get_max_payload()) ? edcl_get_max_payload() : sz, fd);
 		if (n<=0)
 			break;
 	retry:
@@ -299,7 +295,7 @@ static int l_edcl_upload_chunk (lua_State *L) {
 		//printf("write %x %d %d\n", addr, n, sz);
 		if (k<0) 
 		{
-			edcl_init(default_iface, default_baddr, default_saddr);
+			edcl_init(default_iface);
 			goto retry;
 		}
 
@@ -342,12 +338,12 @@ static int l_edcl_upload (lua_State *L) {
 	fflush(stdout);
 	while (sz)
 	{
-		n = fread(tmp, 1, MAX_PAYLOAD, fd);
+		n = fread(tmp, 1, edcl_get_max_payload(), fd);
 	retry:
 		k = edcl_write(addr, tmp, n);
 		if (k<0) 
 		{
-			edcl_init(default_iface, default_baddr, default_saddr);
+			edcl_init(default_iface);
 			goto retry;
 		}
 
@@ -379,7 +375,7 @@ static int l_edcl_download (lua_State *L) {
 	int maxsz = sz;
 	while (sz)
 	{
-		n = (sz >= MAX_PAYLOAD) ? MAX_PAYLOAD : sz;
+		n = (sz >= edcl_get_max_payload()) ? edcl_get_max_payload() : sz;
 		int k = edcl_read(addr, tmp, n);
 		fwrite(tmp, 1, n, fd);
 		addr+=n;
@@ -509,12 +505,6 @@ int main(int argc, char** argv) {
 			break;
 		case 'i':
 			default_iface = optarg;
-			break;
-		case 'b':
-			default_baddr = optarg;
-			break;
-		case 's':
-			default_saddr = optarg;
 			break;
 		case 'h':
 		default:

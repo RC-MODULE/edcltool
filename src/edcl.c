@@ -21,12 +21,16 @@
 
 static int seq = -1;
 static int sock;
+static int maxpayload = 456;
+static char* board_addr = EDCL_DEFAULT_BOARD_ADDRESS; 
+static char* host_addr = EDCL_DEFAULT_HOST_ADDRESS;
 
 static const int LOCAL_PORT = 0x8088;
 static const int REMOTE_PORT = 0x9099;
 
 static int LOCAL_IP;
 static int REMOTE_IP; 
+
 
 static char LOCAL_MAC[6];
 static char REMOTE_MAC[] = {0,0,0x5e, 0,0,0};
@@ -42,6 +46,22 @@ struct EdclPacket {
 	unsigned int control;
 	unsigned int address;
 } __attribute__((packed));
+
+
+
+int edcl_set_profile(enum edcl_platforms profile) {
+	switch(profile) {
+	case K1879XB:
+		maxpayload = 456;
+		/* All other stuff should be default */
+		return 0;
+	}
+	return -1;
+}
+
+int edcl_get_max_payload() {
+	return maxpayload;
+}
 
 unsigned int edcl_seq(struct EdclPacket const* p) {
 	return ntohl(p->control) >> 18;
@@ -62,12 +82,13 @@ unsigned int edcl_control(unsigned seq, unsigned flag, unsigned len) {
 int edcl_send(const void* buf, size_t len);
 int edcl_recv(void* buf, size_t len);
 
-int edcl_init(const char* name, char* board, char* self) {
+int edcl_init(const char* name) {
 	int i;
+	char* board = board_addr; 
+	char* self = host_addr;
 
 	LOCAL_IP = inet_addr(self);
 	REMOTE_IP = inet_addr(board);
-
 	seq = 0;
 
 	sock = socket(PF_PACKET, SOCK_RAW, htons(0x800));
@@ -218,10 +239,10 @@ int edcl_write(unsigned int address, const void* ibuf, size_t len) {
 	struct EdclPacket* rq = (struct EdclPacket*)buf;
 	struct EdclPacket rs;
 
-	if(len > ETH_FRAME_LEN - sizeof(struct Hdr)) {
+	if((len > ETH_FRAME_LEN - sizeof(struct Hdr)) || len > maxpayload) {
 		errno = EINVAL;
-		fprintf(stderr, "payload too large: %zu (%d - %d)",
-			len, ETH_FRAME_LEN, sizeof(struct Hdr)
+		fprintf(stderr, "payload too large: %zu (%d - %d) maximum %d\n",
+			len, ETH_FRAME_LEN, sizeof(struct Hdr), maxpayload
 			);
 		return -1;
 	}

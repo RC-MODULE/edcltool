@@ -4,9 +4,7 @@
 #define CHK(x) if(x) { perror(#x); exit(errno); };
 
 int main(int argc, char* argv[]) {
-	if(edcl_init(argv[1], 
-		     EDCL_DEFAULT_BOARD_ADDRESS, 
-		     EDCL_DEFAULT_HOST_ADDRESS)) {
+	if(edcl_init(argv[1])) {
 		perror("edcl_init");
 		return -1;
 	}
