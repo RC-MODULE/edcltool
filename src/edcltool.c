@@ -13,7 +13,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <edcl.h>
-
+#include <sys/ioctl.h>
 
 #define CHECK() printf("Current stack top:  %d (%s:%d)\n", lua_gettop(L),__FILE__, __LINE__);
 
@@ -277,13 +277,26 @@ static int l_edcl_read (lua_State *L) {
 }
 
 
-static void display_progressbar(int max, int value){
-	float percent = 100.0 - (float) value * 100.0 / (float) max; 
-	int i;
 
-	printf("\r %.02f %% done | ", percent);
-	for (i=0; i< (int) percent; i++)
-		printf("#");
+static void display_progressbar(int max, int value)
+{
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+	float percent = 100.0 - (float) value * 100.0 / (float) max; 
+	
+	int txt = printf("\r %.02f %% done [", percent);
+	int max_bars = w.ws_col - txt - 7;
+	int bars = max_bars - (int)(((float) value * max_bars) / (float) max);
+
+	if (max_bars > 0) {
+		int i;		
+		for (i=0; i<bars; i++)
+			printf("#");
+		for (i=bars; i<max_bars; i++)
+			printf(" ");
+		printf("]");
+	}
 	fflush(stdout);
 }
 
@@ -340,7 +353,7 @@ static int l_edcl_upload_chunk (lua_State *L) {
 
 	if (offset + written == maxsz) { 
 		display_progressbar(maxsz, 0);
-		printf(" | done\n");
+		printf(" done\n");
 	}
 	fclose(fd);
 	lua_pushnumber(L, written);
@@ -384,7 +397,7 @@ static int l_edcl_upload (lua_State *L) {
 		display_progressbar(maxsz,sz);
 	}
 	display_progressbar(maxsz, 0);
-	printf(" | done\n");
+	printf(" done\n");
 	lua_pushnumber(L,0);
 	fclose(fd);
 	return 1;
