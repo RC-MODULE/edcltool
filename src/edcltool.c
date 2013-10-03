@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <getopt.h>
 #include <lualib.h>
 #include <sys/stat.h>
@@ -12,6 +13,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <edcl.h>
+
 
 #define CHECK() printf("Current stack top:  %d (%s:%d)\n", lua_gettop(L),__FILE__, __LINE__);
 
@@ -58,15 +60,37 @@ static int l_edcl_writestring (lua_State *L) {
 	return 0;
 }
 
+
+static int l_edcl_filesize(lua_State *L) {
+	struct stat st;
+	uint64_t size; 
+	int ret;
+	int argc = lua_gettop(L);
+	if (argc!=1)
+		printf("FATAL: incorrect number of args to edlc_fsize\n"),exit(EXIT_FAILURE);
+	const char* filename = lua_tostring(L, 1);
+	printf("%s\n", filename);
+	ret = stat(filename, &st);
+	if (ret == 0) { 
+		size = (uint64_t) st.st_size;
+		lua_pushnumber(L,size);
+	} else {
+		lua_pushnumber(L,-1);
+		perror("stat");
+	}
+	return 1;
+}
+
 static int l_edcl_write (lua_State *L) {
 	
 	int argc = lua_gettop(L);
 	if (argc!=3)
 		printf("FATAL: incorrect number of args to edlc_write\n"),exit(EXIT_FAILURE);
 	int bytes = lua_tonumber(L, 1);
-	unsigned int v32;
-	unsigned short v16;
-	unsigned char v8;
+	uint64_t v64;
+	uint32_t v32;
+	uint16_t v16;
+	uint8_t v8;
 	unsigned int addr = lua_tonumber(L, 2);
 	int ret,i;
 	const char* hexstr;
@@ -93,18 +117,21 @@ static int l_edcl_write (lua_State *L) {
 		break;
 	case 1:
 		/* One byte write */
-		v8 = (char) lua_tonumber(L,3);
+		v8 = (uint8_t) lua_tonumber(L,3);
 		ret = edcl_write(addr, &v8, bytes);
 		break;
 	case 2:
-		v16 = (unsigned short) lua_tonumber(L,3);
+		v16 = (uint16_t) lua_tonumber(L,3);
 		ret = edcl_write(addr, &v16, bytes);
 		break;
 	case 4:
-		v32 = (unsigned int) lua_tonumber(L,3);
+		v32 = (uint32_t) lua_tonumber(L,3);
 		ret =edcl_write(addr, &v32, bytes);
 		break;
-		
+	case 8:
+		v64 = (uint64_t) lua_tonumber(L,3);
+		ret =edcl_write(addr, &v32, bytes);
+		break;
 	default:
 		printf("unsupported write op for edcl_write\n");
 		exit(EXIT_FAILURE);
@@ -223,7 +250,7 @@ static int l_edcl_read (lua_State *L) {
 		printf("FATAL: incorrect number of args to edlc_read\n"),exit(EXIT_FAILURE);
 	int bytes = lua_tonumber(L, 1);
 	unsigned int addr = lua_tonumber(L, 2);
-	char tmp[4];
+	char tmp[8];
 	switch(bytes)
 	{
 	case 1:
@@ -239,7 +266,12 @@ static int l_edcl_read (lua_State *L) {
 		edcl_read(addr, tmp, 4);
 		lua_pushnumber(L,* (unsigned int*) &tmp[0]);
 		break;
+	case 8:
+		edcl_read(addr, tmp, 8);
+		lua_pushnumber(L,* (unsigned int*) &tmp[0]);
+		break;
 	}
+
 	return 1;
 	
 }
@@ -447,6 +479,8 @@ void bind_edcl_functions(lua_State* L){
 	lua_setglobal(L, "edcl_writestring");
 	lua_pushcfunction(L, l_edcl_upload_chunk);
 	lua_setglobal(L, "edcl_upload_chunk");
+	lua_pushcfunction(L, l_edcl_filesize);
+	lua_setglobal(L, "edcl_filesize");
 }
 
 

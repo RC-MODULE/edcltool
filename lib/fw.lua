@@ -39,19 +39,47 @@ local function get_buffer(addr)
    return edcl_read(4, addr); -- get it
 end
 
+function shift_read(n,addr) 
+   v=edcl_read(n, addr);
+   addr=addr+n;
+   return v,addr;
+end
 
 function flash_part(part, file, withoob)
+   result=0;
+
+   fsize = edcl_filesize(file);
+
+   if (fsize == -1) then
+      print("Fatal: can't access image file");
+      return -1
+   end
+
    mboot_cmd("eupgrade "..part); 
    es = edcl_read(4, magic_addr);
-   erase = edcl_read(4, es);
-   oob = edcl_read(4, es + 4);
-   print("mtd: "..part.." erasesize "..erase.." oob "..oob);
-   -- TODO: This logic sucks, and fails with oob stuff
+   erase,es = shift_read(4, es);
+   oob,es = shift_read(4, es);
+   psize,es = shift_read(8, es);
+   wsize = shift_read(4, es);
+   
+   print("mtd: partition "..part.." erasesize "..erase.." oob "..oob);
+   print("mtd: size "..psize.." writesize "..wsize);
+
    if withoob then 
-      chunksize = erase + oob; 
+      oob_per_eraseblock = (erase / writesize) * oob
+      chunksize = erase + oob_per_eraseblock;
+      imagemaxsize = psize + psize/erase * oob_per_eraseblock;
    else
       chunksize = erase;
+      imagemaxsize=psize; 
    end
+
+   if fsize > imagemaxsize then
+      print("Fatal: Image file too big for partition")
+      print(fsize.." > "..imagemaxsize);
+      return -1;
+   end
+
    print("chunksize " .. chunksize);
    offset = 0;
 
@@ -60,10 +88,15 @@ function flash_part(part, file, withoob)
    while true do
       buffer = get_buffer(magic_addr);
       ret = edcl_upload_chunk(buffer, file, offset, chunksize);
+      if (ret == -1) then
+	 print("FATAL: Cannot access file: ", file);
+	 ret = 0; -- fallthrough to finish it
+	 result= -1; -- we failed
+      end
       if (ret == 0) then
 	 edcl_write(4, magic_addr, 0x0); -- signal that we're done with it
 	 edcl_nwait(4, magic_addr, 0x0); -- wait for command state
-	 return;
+	 return result;
       end
       edcl_write(4, magic_addr, 0xa1);
       offset = offset + chunksize;   
