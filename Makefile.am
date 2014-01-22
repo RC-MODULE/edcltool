@@ -8,7 +8,8 @@ luafiles= \
 	lib/fw.lua \
 	lib/nmc.lua
 
-EXTRA_DIST = $(luafiles)
+EXTRA_DIST = $(luafiles) README SCRIPTING.TXT \
+	examples/*.edcl
 
 install-data-local:
 	for file in $(luafiles); do \

@@ -32,6 +32,7 @@ edcl_test_LDADD = $(bin_ldadd)
 edcl_test_CPPFLAGS = $(bin_cflags)
 edcl_test_SOURCES = edcl_test.c
 
+EXTRA_DIST=toolhelpers.h
 
 install-exec-hook:
 	@echo    "#### Setting SUID for edcltool. ####"
