@@ -33,7 +33,7 @@ static int REMOTE_IP;
 
 
 static char LOCAL_MAC[6];
-static char REMOTE_MAC[] = {0,0,0x5e, 0,0,0};
+static char REMOTE_MAC[] = {0, 0, 0x5e, 0, 0, 0};
 
 struct Hdr {
 	struct ethhdr eth;
