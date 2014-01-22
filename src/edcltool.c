@@ -305,14 +305,17 @@ static void display_progressbar(int max, int value)
 static int l_edcl_upload_chunk (lua_State *L) {
 	int argc = lua_gettop(L);
 
-	if (argc!=4)
+	if (argc!=4 && argc!=5)
 		printf("FATAL: incorrect number of args to edlc_upload\n"),exit(EXIT_FAILURE);	
 
 	unsigned int addr = lua_tonumber(L, 1);
 	char* filename = lua_tostring(L, 2);
 	unsigned int offset = lua_tonumber(L, 3);
 	unsigned int len = lua_tonumber(L, 4);
-
+	int silent = 0;
+	if (argc>4)
+		silent = lua_tonumber(L, 5);
+		
 	if (0!=access(filename, R_OK)) {
 		lua_pushnumber(L, -1);
 		return 1;
@@ -347,13 +350,16 @@ static int l_edcl_upload_chunk (lua_State *L) {
 		addr+=n;
 		sz-=n;
 		written += n;
-		display_progressbar(maxsz, maxsz - offset);
+		if (!silent)
+			display_progressbar(maxsz, maxsz - offset);
 		//	sleep(1);
 	}
 
 	if (offset + written == maxsz) { 
-		display_progressbar(maxsz, 0);
-		printf(" done\n");
+		if (!silent) {
+			display_progressbar(maxsz, 0);
+			printf(" done\n");
+		}
 	}
 	fclose(fd);
 	lua_pushnumber(L, written);
@@ -494,6 +500,7 @@ void bind_edcl_functions(lua_State* L){
 	lua_setglobal(L, "edcl_upload_chunk");
 	lua_pushcfunction(L, l_edcl_filesize);
 	lua_setglobal(L, "edcl_filesize");
+	l_elf_register(L);
 }
 
 
@@ -575,35 +582,4 @@ int main(int argc, char** argv) {
 	if (term)
 		interactive_loop(L);
 	return 1;
-	
-
-
-
-/* 
-   if(argc < 3 || sscanf(argv[2], "%x", &address) != 1) {
-   fprintf(stderr, "usage: %s interface address\n", argv[0]);
-   return -1;
-   }
-
-   if(edcl_init(argv[1])) {
-   perror("edcl_init");
-   return -1;
-   }
-
-   for(;;) {
-   char buf[256];
-   size_t n = fread(buf, 1, sizeof(buf), stdin);
-
-   if(n == 0) break;
-
-   if(edcl_write(address, buf, n)) {
-   perror("edcl_write");
-   return -1;
-   }
-
-   address += n;
-   }
-
-*/
-	return 0;
 }

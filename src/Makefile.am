@@ -12,9 +12,9 @@ bin_PROGRAMS=
 
 if BUILD_EDCLTOOL
 bin_PROGRAMS += edcltool
-edcltool_LDADD = $(bin_ldadd) $(LUA_LIBS)
-edcltool_CPPFLAGS = $(bin_cflags) $(LUA_CFLAGS)
-edcltool_SOURCES = edcltool.c
+edcltool_LDADD = $(bin_ldadd) $(LUA_LIBS) $(LIBELF_LIBS) 
+edcltool_CPPFLAGS = $(bin_cflags) $(LUA_CFLAGS) $(LIBELF_CFLAGS) -g
+edcltool_SOURCES = edcltool.c elf.c
 endif
 
 bin_PROGRAMS += edcl_write

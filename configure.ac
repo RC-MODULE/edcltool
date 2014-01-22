@@ -54,11 +54,25 @@ PKG_CHECK_MODULES([lua51], [lua5.1],
   have_lua51=no
 )
 
+
+PKG_CHECK_MODULES([libelf], [libelf],
+  have_libelf=yes
+  ,
+  have_libelf=no
+)
+
+
 if test $found_lua = no; then
     AC_MSG_WARN([Couldn't find any lua of use. Will not build edcltool])
 fi
 
 AM_CONDITIONAL([BUILD_EDCLTOOL], [test x$found_lua = xyes])
+
+if test $have_libelf = yes; then
+   LIBELF_CFLAGS=$libelf_CFLAGS
+   LIBELF_LIBS=$libelf_LIBS
+   AC_MSG_NOTICE([Found a suitable libelf, good])
+fi
 
 if test $have_lua = yes; then
    LUA_CFLAGS=$lua_CFLAGS
@@ -76,7 +90,10 @@ fi
 fi
 fi
 
+
 AC_SUBST([LUA_LIBS])
 AC_SUBST([LUA_CFLAGS])
+AC_SUBST([LIBELF_LIBS])
+AC_SUBST([LIBELF_CFLAGS])
 
 AC_OUTPUT
