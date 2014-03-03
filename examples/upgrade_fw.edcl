@@ -1,6 +1,7 @@
 fw = require("fw");
-mboot_path="/home/necromant/work/mboot/"
 
+mboot_path="/home/necromant/work/mboot/"
+edcl_init();
 fw.run_code(mboot_path.."mboot-uemd.bin",true); -- start in slave mode
 fw.write_bootloader(mboot_path.."mboot-signed.bin") -- save signed loader in NAND
 

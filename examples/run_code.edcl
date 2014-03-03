@@ -1,3 +1,4 @@
 fw = require("fw");
+edcl_init();
 mboot_path="/home/necromant/work/mboot/"
 fw.run_code(mboot_path.."mboot-uemd.bin");
