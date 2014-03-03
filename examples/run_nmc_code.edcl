@@ -1,0 +1,7 @@
+nmc = require("nmc");
+
+edcl_init();
+
+nmc.reset();
+nmc.upload(0x00140000, "myfile.abs");
+nmc.run();
