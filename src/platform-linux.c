@@ -16,6 +16,13 @@
 #include <net/ethernet.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <ifaddrs.h>
+#include <ifaddrs.h>
+#include <sys/types.h>
+
 
 static int LOCAL_IP;
 static int REMOTE_IP; 
@@ -36,6 +43,39 @@ size_t edcl_platform_get_maxpacket()
 	return ETH_FRAME_LEN - sizeof(struct Hdr);
 }
 
+void edcl_platform_list_interfaces() 
+{
+	struct ifaddrs *ifaddr, *ifa;
+	int family, s;
+
+	if (getifaddrs(&ifaddr) == -1) {
+		perror("getifaddrs");
+		exit(EXIT_FAILURE);
+	}
+	
+	/* Walk through linked list, maintaining head pointer so we
+	   can free list later */
+	
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr == NULL)
+			continue;
+		
+		family = ifa->ifa_addr->sa_family;
+		
+		/* Display interface name and family (including symbolic
+		   form of the latter for the common families) */
+
+		
+		/* Display interface name and family (including symbolic
+		   form of the latter for the common families) */
+
+		if (family == AF_PACKET)
+			printf("%s\n", ifa->ifa_name);
+	}
+
+	freeifaddrs(ifaddr);
+	exit(EXIT_SUCCESS);
+}
 
 int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 {
