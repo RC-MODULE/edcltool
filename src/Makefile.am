@@ -1,7 +1,7 @@
 AM_CFLAGS= -D 'LUAEXT_PREFIX="@datadir@/edcltool/lib"' 
 
 lib_LTLIBRARIES = libedcl-1.0.la
-libedcl_1_0_la_SOURCES = edcl.c
+libedcl_1_0_la_SOURCES = edcl.c platform-linux.c chips.c
 libedcl_1_0_la_includedir=$(includedir)/edcl-1.0/
 libedcl_1_0_la_include_HEADERS = edcl.h
 

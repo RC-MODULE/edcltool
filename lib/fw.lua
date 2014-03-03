@@ -1,6 +1,6 @@
 #!/usr/local/bin/edcltool
 
-module("fw", package.seeall) 
+local fw = { }
 
 -- Params are specific to K1879. 
 -- Further chips may change this
@@ -14,20 +14,20 @@ local RAM_BASE   = 0x40100000;
 
 
 
-function magic(value)
+local function magic(value)
    edcl_write(4, magic_addr, value);
 end
 
-function wait_magic(value)
+local function wait_magic(value)
    edcl_wait(4, magic_addr, value);
 end
 
-function wait_nmagic(value)
+local function wait_nmagic(value)
    edcl_nwait(4, magic_addr, value);
 end
 
 
-function mboot_cmd(cmd)
+function fw.mboot_cmd(cmd)
    print("Running: "..cmd);
    edcl_writestring(cmdaddr, cmd);
    magic(0xdeadbeaf);
@@ -39,13 +39,13 @@ local function get_buffer(addr)
    return edcl_read(4, addr); -- get it
 end
 
-function shift_read(n,addr) 
+local function shift_read(n,addr) 
    v=edcl_read(n, addr);
    addr=addr+n;
    return v,addr;
 end
 
-function flash_part(part, file, withoob)
+function fw.flash_part(part, file, withoob)
    result=0;
 
    fsize = edcl_filesize(file);
@@ -104,7 +104,7 @@ function flash_part(part, file, withoob)
 end
 
 
-function run_code(file, slavemode)
+function fw.run_code(file, slavemode)
    edcl_upload(mbootoffs, file);
    magic(0x0); -- in case something left after soft-reset
    print("Starting code...")
@@ -121,7 +121,7 @@ function run_code(file, slavemode)
    end
 end
 
-function mboot_cmd_list(list)
+function fw.mboot_cmd_list(list)
    for j,k in ipairs(list) do
       mboot_cmd(k); 
    end
@@ -132,13 +132,13 @@ local mboot_burn_cmds = {
    "mtd write 0x40100000 0x0 0x40000",
 }
 
-function write_bootloader(file)
+function fw.write_bootloader(file)
    edcl_upload(RAM_BASE, file);
    mboot_cmd_list(mboot_burn_cmds);
    print("Bootloader burned & ready")
 end
 
-function partition(tbl)
+function fw.partition(tbl)
    local parts="setenv parts "
    local env = { } 
    for j,k in ipairs(tbl) do
@@ -155,5 +155,4 @@ function partition(tbl)
    mboot_cmd("saveenv");
 end
  
-
-print(" == EDCL Firmware Library 1.0 ==");
+return fw

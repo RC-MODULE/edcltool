@@ -3,17 +3,31 @@
 
 #include <stdlib.h>
 
-#define EDCL_DEFAULT_BOARD_ADDRESS  "192.168.0.0"
-#define EDCL_DEFAULT_HOST_ADDRESS   "192.168.0.1"
 
-
-
-enum edcl_platforms {
-	K1879XB=0,
-	/* More to come */
+struct edcl_chip_config {
+	char* name;
+	char* board_addr; 
+	char* host_addr;
+	int maxpayload;
+	int local_port;
+	int remote_port;
+	char local_mac[6];
+	char remote_mac[6];
+	
 };
 
+struct EdclPacket {
+	unsigned short offset;
+	unsigned int control;
+	unsigned int address;
+} __attribute__((packed));
 
+
+#define min(a,b) ((a) > (b) ? (b) : (a))
+
+#ifndef MAC_ADDR_LEN
+#define MAC_ADDR_LEN 6
+#endif
 
 /** 
  * 
@@ -24,11 +38,12 @@ enum edcl_platforms {
  * 
  * @return 0 on success, -1 on failure (no such profile)
  */
-int edcl_set_profile(enum edcl_platforms profile);
+int edcl_set_profile(char* name);
+
 
 /** 
  * Get the maximum payload for edcl communications 
- * This is platform specific
+ * This is chip specific
  * 
  * @return Maximum size of payload for read/write
  */
@@ -47,5 +62,17 @@ int edcl_get_max_payload();
 int edcl_init(const char* iname);
 int edcl_read(unsigned int address, void* buffer, size_t len);
 int edcl_write(unsigned int address, const void* buffer, size_t len);
+
+
+/* Global struct with supported profiles */
+extern struct edcl_chip_config g_edcl_chips[];
+
+/* EDCL Platform functions */
+size_t edcl_platform_get_maxpacket();
+void edcl_platform_list_interfaces();
+int edcl_platform_init(const char* name, struct edcl_chip_config *chip);
+int edcl_platform_send(const void* data, size_t len);
+int edcl_platform_recv(void* data, size_t len);
+
 
 #endif

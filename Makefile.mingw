@@ -1,0 +1,57 @@
+CROSS_COMPILE?=i686-w64-mingw32
+CROSS_COMPILE_win64?=x86_64-w64-mingw32
+CROSS_COMPILE_win32?=i686-w64-mingw32
+
+export CROSS_COMPILE
+
+CFILES= src/edcltool.c\
+	src/platform-windows.c \
+	src/chips.c \
+	src/edcl.c
+
+FLAGS+=-L./windeps/lua/src/ -llua -I./windeps/lua/src/
+FLAGS+=-Iwindeps/WpdPack/Include/
+FLAGS+=-Lwindeps/WpdPack/Lib/ -Lwindeps/WpdPack/Lib/x64
+FLAGS+=-lwpcap
+FLAGS+=-lwsock32
+
+
+all: edcltool.exe
+
+.windeps: 
+	  cd windeps && $(MAKE) all
+	  touch $(@)
+
+
+edcl.res: edcl.rc
+	$(CROSS_COMPILE)-windres $(^) -O coff -o $(@)
+
+edcltool.exe: .windeps edcl.res $(CFILES)
+	$(CROSS_COMPILE)-gcc --std=c99 -Wall -DEDCL_WINDOWS \
+	$(CFILES) -Isrc/ edcl.res -o edcltool \
+	-lm  $(FLAGS) \
+	-o $(@)
+
+clean: 
+	-rm .windeps
+	-rm edcltool.exe
+	-cd windeps && $(MAKE) clean
+	-rm edcl.res
+
+BUILDDATE=$(shell date +%d%m%Y)
+
+bundle: edcltool-$(BUILDDATE)-win32.tgz
+	echo > /dev/null
+
+edcltool-compile-%: 
+	$(MAKE) -f Makefile.mingw clean
+	$(MAKE) -f Makefile.mingw CROSS_COMPILE=$(CROSS_COMPILE_$(*))
+
+edcltool-$(BUILDDATE)-%.tgz: edcltool-compile-%
+	mkdir -p edcltool-$(*)
+	cp edcltool.exe edcltool-$(*)/
+	cp -Rfv lib edcltool-$(*)/
+	tar cvpzf $(@) edcltool-$(*)/
+	rm -Rfv edcltool-$(*)
+
+.PHONY: bundle

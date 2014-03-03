@@ -7,13 +7,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <libgen.h>
-#include <net/ethernet.h>
+#include <edcl.h>
+
+#ifndef EDCL_WINDOWS
 #include <sys/ioctl.h>
-#include <net/if.h>
 #include <readline/readline.h>
 #include <readline/history.h>
-#include <edcl.h>
-#include <sys/ioctl.h>
+#include <ifaddrs.h>
+#endif
 
 #define CHECK() printf("Current stack top:  %d (%s:%d)\n", lua_gettop(L),__FILE__, __LINE__);
 
@@ -29,18 +30,28 @@ void usage(char* app)
 	printf(
 		"EDCL scripting interpreter\n"
 		"Usage %s [options]\n"
-		"-i interface\t Use interface (default - eth0) \n"
-		"-b address \t Specify board address (default - 192.168.0.0) \n"
-		"-s address \t Specify self address (default - 192.168.0.1) \n"
-		"-t \t Enter interactive terminal mode \n"
-		"-h\t This help \n"
+#ifndef EDCL_WINDOWS 
+		"-i interface      Use this interface (default - eth0) \n"
+#else
+		"-i interface      Use this interface (Number). Use -l to list them\n"
+#endif
+		"-b address        Specify board address (default - 192.168.0.0) \n"
+		"-s address        Specify self address (default - 192.168.0.1) \n"
+		"-t                Enter interactive terminal mode \n"
+		"-l                List available network interfaces"
+		"-h                Show this useless help message \n"
 		"See SCRIPTING.TXT for avaliable lua functions\n"
 		"(c) Andrew Andrianov <andrianov@module.ru> @ RC Module 2012\n", app
 		);
 	exit(1);
 }
 
+#ifndef EDCL_WINDOWS 
 static	char* default_iface = "eth0";
+#else
+static	char* default_iface = "0";
+#endif
+
 
 static int l_edcl_init (lua_State *L) {
 	int r = edcl_init(default_iface);
@@ -280,6 +291,7 @@ static int l_edcl_read (lua_State *L) {
 
 static void display_progressbar(int max, int value)
 {
+#ifndef EDCL_WINDOWS
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
@@ -298,6 +310,7 @@ static void display_progressbar(int max, int value)
 		printf("]");
 	}
 	fflush(stdout);
+#endif
 }
 
 
@@ -309,7 +322,7 @@ static int l_edcl_upload_chunk (lua_State *L) {
 		printf("FATAL: incorrect number of args to edlc_upload\n"),exit(EXIT_FAILURE);	
 
 	unsigned int addr = lua_tonumber(L, 1);
-	char* filename = lua_tostring(L, 2);
+	const char* filename = lua_tostring(L, 2);
 	unsigned int offset = lua_tonumber(L, 3);
 	unsigned int len = lua_tonumber(L, 4);
 	int silent = 0;
@@ -372,7 +385,7 @@ static int l_edcl_upload (lua_State *L) {
 	if (argc!=2)
 		printf("FATAL: incorrect number of args to edlc_upload\n"),exit(EXIT_FAILURE);	
 	unsigned int addr = lua_tonumber(L, 1);
-	char* filename = lua_tostring(L, 2);
+	const char* filename = lua_tostring(L, 2);
 	printf("Uploading %s to 0x%X\n", filename, addr);
 	if (0!=access(filename, R_OK)) {
 		lua_pushnumber(L,-1);
@@ -415,7 +428,7 @@ static int l_edcl_download (lua_State *L) {
 	if (argc!=3)
 		printf("FATAL: incorrect number of args to edlc_download\n"),exit(EXIT_FAILURE);
 	unsigned int addr = lua_tonumber(L, 1);
-	char* filename = lua_tostring(L, 2);
+	const char* filename = lua_tostring(L, 2);
 	unsigned int sz = lua_tonumber(L, 3);
 	printf("Downloading 0x%X-0x%X to %s\n", addr, addr+sz, filename);
 	printf("Filesize: %d bytes\n", sz);
@@ -445,7 +458,7 @@ static int l_edcl_hexdump (lua_State *L) {
 	if (argc!=3)
 		printf("FATAL: incorrect number of args to edlc_download\n"),exit(EXIT_FAILURE);
 	unsigned int addr = lua_tonumber(L, 1);
-	char* filename = lua_tostring(L, 2);
+	const char* filename = lua_tostring(L, 2);
 	unsigned int sz = lua_tonumber(L, 3);
 	printf("Downloading 0x%X-0x%X to %s\n", addr, addr+sz, filename);
 	printf("Filesize: %d bytes\n", sz);
@@ -500,7 +513,7 @@ void bind_edcl_functions(lua_State* L){
 	lua_setglobal(L, "edcl_upload_chunk");
 	lua_pushcfunction(L, l_edcl_filesize);
 	lua_setglobal(L, "edcl_filesize");
-	l_elf_register(L);
+	//l_elf_register(L);
 }
 
 
@@ -524,17 +537,21 @@ void interactive_loop(lua_State* L) {
 	}
 }
 #else
-interactive_loop(lua_State* L) {
-	printf("Interactive mode inhibited at compile-time\n");
+void interactive_loop(lua_State* L) {
+	printf("Interactive mode disabled at compile-time or not supported on this platform\n");
 }
 
 #endif
 
 
+#ifndef EDCL_WINDOWS
 const char setup_paths[] =						\
 	"package.path = '" LUAEXT_PREFIX "/?.lua;'..package.path\n" ;
+#else
+const char setup_paths[] =						\
+	"package.path = 'lib/?.lua;'..package.path\n" ;
+#endif
 
-#warning LUAEXT_PREFIX
 
 #define PROGNAME "edcltool"
 int main(int argc, char** argv) {
@@ -549,7 +566,7 @@ int main(int argc, char** argv) {
 	}
 	const char* file = NULL;
 	int term = 0;
-	while ((opt = getopt(argc, argv, "thi:s:b:f:")) != -1) {
+	while ((opt = getopt(argc, argv, "thi:s:b:f:l")) != -1) {
                 switch (opt) {
 		case 'f':
 			file = optarg;
@@ -559,6 +576,10 @@ int main(int argc, char** argv) {
 			break;
 		case 'i':
 			default_iface = optarg;
+			break;
+		case 'l':
+			edcl_platform_list_interfaces();
+			exit(1);
 			break;
 		case 'h':
 		default:
