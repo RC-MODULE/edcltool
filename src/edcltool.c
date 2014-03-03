@@ -291,11 +291,12 @@ static int l_edcl_read (lua_State *L) {
 
 static void display_progressbar(int max, int value)
 {
+	float percent = 100.0 - (float) value * 100.0 / (float) max; 
+
 #ifndef EDCL_WINDOWS
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
-	float percent = 100.0 - (float) value * 100.0 / (float) max; 
 	
 	int txt = printf("\r %.02f %% done [", percent);
 	int max_bars = w.ws_col - txt - 7;
@@ -309,8 +310,11 @@ static void display_progressbar(int max, int value)
 			printf(" ");
 		printf("]");
 	}
-	fflush(stdout);
+#else
+	printf("\r%.02f %% complete");
 #endif
+	fflush(stdout);
+
 }
 
 
