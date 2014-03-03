@@ -1,0 +1,25 @@
+10 ICON "edcl.ico"
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "080904E4"
+    BEGIN
+      VALUE "CompanyName", "RC Module"
+      VALUE "FileDescription", "One Ultimate EDCL Tool"
+      VALUE "FileVersion", "1.0"
+      VALUE "InternalName", "edcltool"
+      VALUE "LegalCopyright", "RC Module"
+      VALUE "OriginalFilename", "edcltool.exe"
+      VALUE "ProductName", "EDCL Tool"
+      VALUE "ProductVersion", "1.0"
+    END
+  END
+
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x809, 1252
+  END
+END
