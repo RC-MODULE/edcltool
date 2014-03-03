@@ -1,0 +1,6 @@
+Для сборки пакета под Windows используйте Makefile.mingw: 
+Пример: 
+
+make -f Makefile.mingw bundle
+
+На выходе tgz архив с windows версией и библиотеками. 
