@@ -292,14 +292,16 @@ static int l_edcl_read (lua_State *L) {
 static void display_progressbar(int max, int value)
 {
 	float percent = 100.0 - (float) value * 100.0 / (float) max; 
-
+	int cols; 
 #ifndef EDCL_WINDOWS
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-
-	
+	cols = w.ws_col;
+#else 
+	cols = 40;
+#endif
 	int txt = printf("\r %.02f %% done [", percent);
-	int max_bars = w.ws_col - txt - 7;
+	int max_bars = cols - txt - 7;
 	int bars = max_bars - (int)(((float) value * max_bars) / (float) max);
 
 	if (max_bars > 0) {
@@ -310,11 +312,7 @@ static void display_progressbar(int max, int value)
 			printf(" ");
 		printf("]");
 	}
-#else
-	printf("\r%.02f %% complete");
-#endif
 	fflush(stdout);
-
 }
 
 
@@ -341,7 +339,7 @@ static int l_edcl_upload_chunk (lua_State *L) {
 	struct stat buf;
 	stat(filename, &buf);
 	unsigned int sz = (unsigned int) buf.st_size;
-	FILE* fd = fopen(filename, "r");
+	FILE* fd = fopen(filename, "rb");
 	char tmp[2048];
 	int n, k; 
 	int maxsz = sz;
@@ -357,7 +355,6 @@ static int l_edcl_upload_chunk (lua_State *L) {
 			break;
 	retry:
 		k = edcl_write(addr, tmp, n);
-		//printf("write %x %d %d\n", addr, n, sz);
 		if (k<0) 
 		{
 			edcl_init(default_iface);
@@ -369,7 +366,6 @@ static int l_edcl_upload_chunk (lua_State *L) {
 		written += n;
 		if (!silent)
 			display_progressbar(maxsz, maxsz - offset);
-		//	sleep(1);
 	}
 
 	if (offset + written == maxsz) { 
@@ -398,8 +394,8 @@ static int l_edcl_upload (lua_State *L) {
 	struct stat buf;
 	stat(filename, &buf);
 	unsigned int sz = (unsigned int) buf.st_size;
-	printf("Filesize: %d bytes\n", sz);
-	FILE* fd = fopen(filename, "r");
+	printf("Filesize: %d bytes maxpayload %d\n", sz, edcl_get_max_payload());
+	FILE* fd = fopen(filename, "rb");
 	char tmp[2048];
 	int n, k; 
 	int maxsz = sz;
@@ -604,7 +600,9 @@ int main(int argc, char** argv) {
 			report_errors(L, s);
         }
         report_errors(L, s);
+
 	if (term)
 		interactive_loop(L);
-	return 1;
+
+	return 0;
 }

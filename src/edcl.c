@@ -57,12 +57,10 @@ unsigned int edcl_control(unsigned seq, unsigned flag, unsigned len) {
 }
 
 int edcl_send(const void* buf, size_t len) {
-	printf("plat send\n");
 	return edcl_platform_send(buf, len);
 }
 
 int edcl_recv(void* buf, size_t len) {
-	printf("plat get\n");
 	return edcl_platform_recv(buf, len);
 }
 
@@ -72,7 +70,6 @@ int edcl_init(const char* ifname) {
 
 	seq = 0;
 
-	/* FixMe: take care of profile selection */
 	edcl_platform_init(ifname, chip_config);
 
 	struct EdclPacket rq = { .control = edcl_control(0, 0, 0) };
@@ -96,10 +93,12 @@ int edcl_init(const char* ifname) {
 
 int edcl_transaction(struct EdclPacket* rq, size_t rqlen, struct EdclPacket* rs, size_t rslen) {
 	int i;
-	for(i = 0; i < 3; ++i) {
-		if(edcl_send(rq, rqlen)) return -1;
+	for(i = 0; i < 5; ++i) {
+		if(edcl_send(rq, rqlen)) 
+			return -1;
 		ssize_t n = edcl_recv(rs, rslen);
-		if(n < 0) return -1;
+		if(n < 0) 
+			return -1;
 
 		if(edcl_rwnak(rs)) {
 			seq = edcl_seq(rs) + 1;
@@ -118,8 +117,8 @@ static void check_initialized()
 	if (!initialized) { 
 		fprintf(stderr, "FATAL: Trying to do something without calling 'edcl_init' first\n");
 		fprintf(stderr, "       Looks like a bug in your script\n");
+		exit(1);
 	}
-	exit(1);
 }
 
 int edcl_read(unsigned int address, void* obuf, size_t len) 

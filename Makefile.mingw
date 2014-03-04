@@ -27,7 +27,7 @@ edcl.res: edcl.rc
 	$(CROSS_COMPILE)-windres $(^) -O coff -o $(@)
 
 edcltool.exe: .windeps edcl.res $(CFILES)
-	$(CROSS_COMPILE)-gcc --std=c99 -Wall -DEDCL_WINDOWS \
+	$(CROSS_COMPILE)-gcc --std=c99 -static -Wall -DEDCL_WINDOWS \
 	$(CFILES) -Isrc/ edcl.res -o edcltool \
 	-lm  $(FLAGS) \
 	-o $(@)

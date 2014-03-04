@@ -55,7 +55,7 @@ function fw.flash_part(part, file, withoob)
       return -1
    end
 
-   mboot_cmd("eupgrade "..part); 
+   fw.mboot_cmd("eupgrade "..part); 
    es = edcl_read(4, magic_addr);
    erase,es = shift_read(4, es);
    oob,es = shift_read(4, es);
@@ -123,7 +123,7 @@ end
 
 function fw.mboot_cmd_list(list)
    for j,k in ipairs(list) do
-      mboot_cmd(k); 
+      fw.mboot_cmd(k); 
    end
 end
 
@@ -134,7 +134,7 @@ local mboot_burn_cmds = {
 
 function fw.write_bootloader(file)
    edcl_upload(RAM_BASE, file);
-   mboot_cmd_list(mboot_burn_cmds);
+   fw.mboot_cmd_list(mboot_burn_cmds);
    print("Bootloader burned & ready")
 end
 
@@ -149,10 +149,10 @@ function fw.partition(tbl)
 	 table.insert(env,"setenv "..k[1].."_size -")
       end
    end
-   mboot_cmd(parts);
-   mboot_cmd_list(env);
-   mboot_cmd("partscan");
-   mboot_cmd("saveenv");
+   fw.mboot_cmd(parts);
+   fw.mboot_cmd_list(env);
+   fw.mboot_cmd("partscan");
+   fw.mboot_cmd("saveenv");
 end
  
 return fw

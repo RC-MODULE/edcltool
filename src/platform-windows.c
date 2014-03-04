@@ -118,7 +118,6 @@ static pcap_t *select_interface_by_id(int id)
 	int i=0;
 	for(pcap_if_t *d=alldevs; d && !res; d=d->next) {
 		if ( i++ == id) { 
-			printf("Using iface %d. %s %s\n", --i, d->name, d->description);
 			res = pcap_open_live(d->name, 65536, 1, 1000, errbuf);
 			if(res)
 				pcap_setmintocopy(res, 0);				
@@ -134,8 +133,9 @@ static pcap_t *select_interface_by_id(int id)
 
 int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 {
-	dbg("WinEDCL init, using interface %d\n", atoi(name));
-	ppcap = NULL;
+	if (ppcap) 
+		return;
+	
 	memset(chip->local_mac, 0, MAC_ADDR_LEN);
 
 	char mac[] = { 0x14, 0xda, 0xe9, 0x5e, 0x9e, 0x9f };
