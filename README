@@ -12,11 +12,16 @@ lua5.1 и lua5.1-devel для rhel
 
 tar vxf edcltool.tar.gz
 
-Произведите сблрку и установку в систему
+Произведите сблрку и установку в систему 
+средствами autotools
 
 cd edcltool
+autoreconf --install --force (Только для версии из git репозитория)
+./configure --prefix=/usr
 make
 sudo make install
+
+Инструкции для сборки под windows в README.mingw32
 
 в каталоге examples есть примеры сценариев. Для запуска сценариев используйте 
 команду edcltool -f имя_файла_сценария

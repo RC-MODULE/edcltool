@@ -40,6 +40,7 @@ void usage(char* app)
 		"-t                Enter interactive terminal mode \n"
 		"-l                List available network interfaces"
 		"-h                Show this useless help message \n"
+		"-f script.edcl    Run this edcl script\n"
 		"See SCRIPTING.TXT for avaliable lua functions\n"
 		"(c) Andrew Andrianov <andrianov@module.ru> @ RC Module 2012\n", app
 		);
