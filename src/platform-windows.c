@@ -203,19 +203,22 @@ int edcl_platform_send(const void* data, size_t len)
 	return pcap_sendpacket(ppcap, (const u_char *) psendpacket, len + sizeof(struct S_Packet) - 1);
 }
 
-int edcl_platform_recv(void* data, size_t len) 
+
+
+int edcl_platform_recv(void* data, size_t len)
 {
 	struct pcap_pkthdr *header;
 	const unsigned char *pkt_data;
-
+	const struct S_Packet *packet;
+	size_t rlen;
 	if (pcap_next_ex(ppcap, &header, &pkt_data) <= 0) {
 		fprintf(stderr, "edcl_windows: didn't receive a packet\n");
 		return -1;
 	}
-	
-	const struct S_Packet *packet = (const struct S_Packet*) pkt_data;
-
-	memcpy(data, pkt_data + sizeof(struct S_Hdr), len);
-	
-	return len;
+	rlen = min((header->len - sizeof(struct S_Hdr)), len);   
+	packet = (const struct S_Packet*) pkt_data;
+	memcpy(data, pkt_data + sizeof(struct S_Hdr), rlen);
+     
+	return rlen;
 }
+
