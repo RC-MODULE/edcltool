@@ -38,9 +38,8 @@ void usage(char* app)
 		"-b address        Specify board address (default - 192.168.0.0) \n"
 		"-s address        Specify self address (default - 192.168.0.1) \n"
 		"-t                Enter interactive terminal mode \n"
-		"-l                List available network interfaces"
-		"-h                Show this useless help message \n"
-		"-f script.edcl    Run this edcl script\n"
+		"-l                List available network interfaces\n"
+		"-h                Show this useless help message\n"
 		"See SCRIPTING.TXT for avaliable lua functions\n"
 		"(c) Andrew Andrianov <andrianov@module.ru> @ RC Module 2012\n", app
 		);
@@ -341,7 +340,7 @@ static int l_edcl_upload_chunk (lua_State *L) {
 	stat(filename, &buf);
 	unsigned int sz = (unsigned int) buf.st_size;
 	FILE* fd = fopen(filename, "rb");
-	char tmp[2048];
+	unsigned char tmp[2048];
 	int n, k; 
 	int maxsz = sz;
 	int written=0;
@@ -354,6 +353,7 @@ static int l_edcl_upload_chunk (lua_State *L) {
 		n = fread(tmp, 1, (sz > edcl_get_max_payload()) ? edcl_get_max_payload() : sz, fd);
 		if (n<=0)
 			break;
+		
 	retry:
 		k = edcl_write(addr, tmp, n);
 		if (k<0) 
@@ -361,7 +361,6 @@ static int l_edcl_upload_chunk (lua_State *L) {
 			edcl_init(default_iface);
 			goto retry;
 		}
-
 		addr+=n;
 		sz-=n;
 		written += n;
@@ -514,7 +513,11 @@ void bind_edcl_functions(lua_State* L){
 	lua_setglobal(L, "edcl_upload_chunk");
 	lua_pushcfunction(L, l_edcl_filesize);
 	lua_setglobal(L, "edcl_filesize");
-	//l_elf_register(L);
+#ifdef ENABLE_ELFLOAD
+	l_elf_register(L);
+#else
+#warning Elf loading disabled!
+#endif
 }
 
 

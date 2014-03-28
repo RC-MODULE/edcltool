@@ -1,7 +1,16 @@
 local nmc = { }
 
-nmc.upload = function(offset, filename)
-   print("Uploading "..filename.." @ phys offset "..string.format("0x%x",offset));
+
+local function nmc_to_arm(addr)
+   if (addr < 0x00040000) then
+      addr = addr + 0x00050000;
+   end
+   addr = addr * 4;
+   return addr;
+end
+
+nmc.upload = function(filename)
+   print("Uploading "..filename.." to system memory ");
    a = edcl_elf_open(filename);
    a = edcl_elf_getsections(a);
    for i,j in ipairs(a) do
@@ -10,20 +19,19 @@ nmc.upload = function(offset, filename)
       if (j.sh_size == 0) then
 	 need = false
       end
-      
-      if (j.sh_addr == 0) then
-	 need = false
-      end
-      
+
+            
       if (need) then
-	 addr = offset + j.sh_addr;
+	 addr = nmc_to_arm(j.sh_addr);
 	 print("Uploading section: "..j.name.." "..j.sh_size.." bytes to 0x"..string.format("%x",addr));
-	 edcl_upload_chunk(addr, filename, j.sh_offset, j.sh_size, 1);
+	 n = edcl_upload_chunk(addr, filename, j.sh_offset, j.sh_size, 1);
+	 print(n)
       else
-	 print("Skipping section: "..j.name.." "..j.sh_size.." bytes addr "..j.sh_addr);
+	 print("Skipping section: "..j.name.." "..j.sh_size.." bytes addr 0x"..string.format("%x",addr));
       end
    end
 end
+
 
 nmc.reset = function()
    print("nmc: reset")

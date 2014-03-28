@@ -31,9 +31,12 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
 		 libedcl-1.0.pc])
 
+
+
+
 found_lua=no
 
-PKG_CHECK_MODULES([lua], [lua>=5.1],
+PKG_CHECK_MODULES([lua], [lua],
   found_lua=yes
   have_lua=yes
   ,
@@ -55,23 +58,57 @@ PKG_CHECK_MODULES([lua51], [lua5.1],
 )
 
 
+# On CentOS we have no pkg-config file in libelf-devel
+# So we handle this case with care
+
+libelf_pkgconfig_lies=no
 PKG_CHECK_MODULES([libelf], [libelf],
   have_libelf=yes
   ,
-  have_libelf=no
+    AC_CHECK_HEADER(libelf.h,
+    [AC_MSG_NOTICE([PKG-CONFIG is a liar! We have libelf headers and will try to use them!]) 
+    			       have_libelf=yes
+			       libelf_pkgconfig_lies=yes
+    ],
+    [
+    AC_MSG_WARN([No libelf found in system. ELF loading will not be supported!])   
+    			   	have_libelf=no
+    ]
+    )
 )
 
 
-if test $found_lua = no; then
-    AC_MSG_WARN([Couldn't find any lua of use. Will not build edcltool])
+AC_ARG_ENABLE([edcltool],
+    AS_HELP_STRING([--disable-edcltool], [Do not build edcltool]))
+AM_CONDITIONAL([BUILD_EDCLTOOL], [test x$found_lua = xyes    -a x$enable_edcltool != xno ])
+
+AC_ARG_ENABLE([elfload],
+    AS_HELP_STRING([--disable-elfload], [Do not build elf loader functions (nmc library will not work)]))
+AM_CONDITIONAL([BUILD_ELFLOAD], [test x$have_libelf = xyes -a x$enable_elfload  != xno ])
+
+
+if test $found_lua = no -a x$enable_edcltool != xno; then
+    AC_MSG_WARN([Couldn't find any lua of use. I won't be able to build edcltool])
+    AC_MSG_ERROR([Either rerun configure with --disable-edcltool or install lua devel packages])	
 fi
 
-AM_CONDITIONAL([BUILD_EDCLTOOL], [test x$found_lua = xyes])
+if test $have_libelf = no -a x$enable_elfload != xno; then
+    AC_MSG_WARN([Couldn't find any useable libelf. edcltool will not be able to operate with elf files])
+    AC_MSG_WARN([In other words - you won't be able to upload .abs files to nmc core])
+    AC_MSG_ERROR([Either rerun configure with --disable-elfload or install libelf devel packages])		
+fi
+
+
 
 if test $have_libelf = yes; then
+if test $libelf_pkgconfig_lies = yes; then
    LIBELF_CFLAGS=$libelf_CFLAGS
    LIBELF_LIBS=$libelf_LIBS
-   AC_MSG_NOTICE([Found a suitable libelf, good])
+else
+   LIBELF_LIBS=-lelf
+fi
+   HAVE_LIBELF=yes
+   AC_MSG_NOTICE([Found a usable libelf, good])
 fi
 
 if test $have_lua = yes; then

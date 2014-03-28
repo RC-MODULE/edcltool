@@ -75,8 +75,49 @@ static int l_elf_open(lua_State *L)
 	printf("Machine id: 0x%x\n", ehdr.e_machine);
 
 	lua_pushlightuserdata (L, e);	
-	return 1;
+	lua_pushnumber(L, ehdr.e_entry);
+	return 2;
 }
+
+
+static int l_elf_getprogsegments(lua_State *L) 
+{
+	CHECK_ARGCOUNT("edcl_elf_getprogsections", 1);
+	struct edcl_elf *l = lua_touserdata(L, 1);
+	int i=1;
+	Elf_Scn *scn = NULL;                   /* Section Descriptor */
+	GElf_Phdr phdr;                 /* Section Header */
+	l->elf = elf_begin(l->fd, ELF_C_READ , NULL);	
+	lua_newtable(L);
+	size_t pnum; 
+	elf_getphdrnum(l->elf, &pnum);
+	for (i=0; i< pnum; i++) {
+		gelf_getphdr(l->elf, i, &phdr);
+		if (phdr.p_type != PT_LOAD) 
+			continue;
+		
+		lua_pushnumber(L, phdr.p_offset);
+		lua_setfield(L, -2, "p_offset");
+
+		lua_pushnumber(L, phdr.p_filesz);
+		lua_setfield(L, -2, "p_filesz");
+
+		lua_pushnumber(L, phdr.p_memsz);
+		lua_setfield(L, -2, "p_memsz");
+
+		lua_rawseti(L, -2, i++);
+	}
+	
+	return 1;
+	
+}
+
+static int l_elf_getprogsegments(lua_State *L) 
+{
+	
+}
+
+
 
 static int l_elf_getsections(lua_State *L) 
 {
@@ -159,4 +200,6 @@ void l_elf_register(lua_State *L)
 	lua_setglobal(L, "edcl_elf_open");
 	lua_pushcfunction(L, l_elf_getsections);
 	lua_setglobal(L, "edcl_elf_getsections");
+	lua_pushcfunction(L, l_elf_getprogsegments);
+	lua_setglobal(L, "edcl_elf_getprogsegments");
 }

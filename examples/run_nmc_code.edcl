@@ -1,7 +1,6 @@
 nmc = require("nmc");
-
 edcl_init();
+nmc.load_init_code(os.getenv("NEURO").."/bin-win32/initmb7707.abs");
 
-nmc.reset();
-nmc.upload(0x00140000, "myfile.abs");
-nmc.run();
+entry = nmc.upload("hdmi-test.abs");
+nmc.run(entry);
