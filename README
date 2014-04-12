@@ -16,8 +16,8 @@ tar vxf edcltool.tar.gz
 средствами autotools
 
 cd edcltool
-autoreconf --install --force (Только для версии из git репозитория)
-./configure --prefix=/usr
+./bootstrap
+./configure
 make
 sudo make install
 
