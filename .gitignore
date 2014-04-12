@@ -1,3 +1,23 @@
 *~
 *.o
 #*#
+
+# configure/autotools output
+aclocal.m4
+autom4te.cache
+compile
+config.*
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+Makefile
+mdate-sh
+missing
+stamp-h1
+INSTALL
+*.in
+ar-lib
+.deps
+libedcl-1.0.pc
