@@ -3,11 +3,13 @@ AC_INIT([edcltool], [0.1], [andrew@ncrmnt.org])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_CONFIG_HEADERS([config.h])
 AC_C_INLINE
-LT_INIT
 
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
+AM_PROG_AR
+
+LT_INIT
 
 AC_MSG_NOTICE([ *** MADE IN USSR WITH LOVE *** ])
 sleep 1
