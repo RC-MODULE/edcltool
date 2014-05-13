@@ -1,3 +1,5 @@
-TODO: 
-* Автоопределение размера терминала для прогрессбара
-* Документация по библиотеке 'fw'
+TODO:
+* Cleanup sources and refactor
+* Better mingw32 support
+* Better error handling
+
