@@ -1,6 +1,10 @@
-nmc = require("nmc");
-edcl_init();
-nmc.load_init_code(os.getenv("NEURO").."/bin-win32/initmb7707.abs");
+nmc = require("easynmc");
+nmc.debug = true;
 
-entry = nmc.upload("hdmi-test.abs");
+edcl_init();
+nmc.init_core("ipl-K1879-nmc-debug.abs");
+entry = nmc.upload("myfile.abs");
 nmc.run(entry);
+-- Warning: nmc stdio,arguments and return code are NOT yet supported 
+-- when running via edcl. 
+-- Expect these in future updates. Sorry.
