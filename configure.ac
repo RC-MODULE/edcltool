@@ -104,10 +104,10 @@ fi
 
 if test $have_libelf = yes; then
 if test $libelf_pkgconfig_lies = yes; then
+   LIBELF_LIBS=-lelf
+else
    LIBELF_CFLAGS=$libelf_CFLAGS
    LIBELF_LIBS=$libelf_LIBS
-else
-   LIBELF_LIBS=-lelf
 fi
    HAVE_LIBELF=yes
    AC_MSG_NOTICE([Found a usable libelf, good])
