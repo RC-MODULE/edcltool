@@ -6,7 +6,7 @@ SUBDIRS = src
 lualibdir=@datadir@/edcltool
 luafiles= \
 	lib/fw.lua \
-	lib/nmc.lua
+	lib/easynmc.lua
 
 EXTRA_DIST = $(luafiles) README SCRIPTING.TXT \
 	examples/*.edcl
