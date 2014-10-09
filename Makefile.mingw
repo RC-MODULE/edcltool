@@ -1,19 +1,27 @@
-CROSS_COMPILE?=i686-w64-mingw32
+GNU_TARGET_NAME?=i686-w64-mingw32
+CROSS_COMPILE?=$(GNU_TARGET_NAME)-
+
 CROSS_COMPILE_win64?=x86_64-w64-mingw32
 CROSS_COMPILE_win32?=i686-w64-mingw32
 
-export CROSS_COMPILE
+export CROSS_COMPILE GNU_TARGET_NAME
 
 CFILES= src/edcltool.c\
 	src/platform-windows.c \
 	src/chips.c \
-	src/edcl.c
+	src/edcl.c \
+	src/elf.c
 
 FLAGS+=-L./windeps/lua/src/ -llua -I./windeps/lua/src/
+FLAGS+=-I./windeps/libelf/root/include/libelf/
+FLAGS+=-I./windeps/libelf/root/include/
 FLAGS+=-Iwindeps/WpdPack/Include/
 FLAGS+=-Lwindeps/WpdPack/Lib/ -Lwindeps/WpdPack/Lib/x64
 FLAGS+=-lwpcap
 FLAGS+=-lwsock32
+FLAGS+=-L./windeps/libelf/root/lib/
+FLAGS+=-lelf
+
 
 
 all: edcltool.exe
@@ -24,10 +32,10 @@ all: edcltool.exe
 
 
 edcl.res: edcl.rc
-	$(CROSS_COMPILE)-windres $(^) -O coff -o $(@)
+	$(CROSS_COMPILE)windres $(^) -O coff -o $(@)
 
 edcltool.exe: .windeps edcl.res $(CFILES)
-	$(CROSS_COMPILE)-gcc --std=c99 -static -Wall -DEDCL_WINDOWS \
+	$(CROSS_COMPILE)gcc --std=c99 -static -Wall -DEDCL_WINDOWS -DENABLE_ELFLOAD \
 	$(CFILES) -Isrc/ edcl.res -o edcltool \
 	-lm  $(FLAGS) \
 	-o $(@)
@@ -45,7 +53,7 @@ bundle: edcltool-$(BUILDDATE)-win32.tgz
 
 edcltool-compile-%: 
 	$(MAKE) -f Makefile.mingw clean
-	$(MAKE) -f Makefile.mingw CROSS_COMPILE=$(CROSS_COMPILE_$(*))
+	$(MAKE) -f Makefile.mingw
 
 edcltool-$(BUILDDATE)-%.tgz: edcltool-compile-%
 	mkdir -p edcltool-$(*)

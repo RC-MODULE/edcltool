@@ -7,8 +7,6 @@
 #include <fcntl.h>
 #include <libelf.h>
 #include <gelf.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <lauxlib.h>
 #include <lualib.h>
 

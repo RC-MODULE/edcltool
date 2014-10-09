@@ -1,9 +1,13 @@
-CROSS_COMPILE?=x86_64-w64-mingw32
-PACKAGES:=lua
+
+PACKAGES:=lua libelf
 
 lua_ver=5.2.3
 lua_FILE=lua-$(lua_ver).tar.gz
 lua_URL=http://www.lua.org/ftp/$(lua_FILE)
+
+libelf_ver=0.8.9
+libelf_FILE=libelf-$(libelf_ver).tar.gz
+libelf_URL=http://www.mr511.de/software/$(libelf_FILE)
 
 
 define package_fetch
@@ -30,11 +34,21 @@ define lua/compile
 	cd lua/src/; \
 	FILES="`ls *.c | grep -v lua.c |grep -v luac.c`"; \
 	for f in $$$${FILES}; do \
-		$(CROSS_COMPILE)-gcc -o $$$$f.o -c $$$$f; \
+		$(CROSS_COMPILE)gcc -o $$$$f.o -c $$$$f; \
 		echo "Compiling $$$$f"; \
 	done; \
-	$(CROSS_COMPILE)-ar rcs liblua.a *.o
+	$(CROSS_COMPILE)ar rcs liblua.a *.o
 #	touch $$(@)
+endef
+
+define libelf/compile
+.stmp-compiled-$(1): 
+	cd libelf && \
+	sed -i 's/w32\/Makefile//' configure.in && \
+	autoreconf --install --force && \
+	./configure --prefix=`pwd`/root/ $(GNU_TARGET_NAME) && \
+	make && \
+	make install
 endef
 
 $(foreach p,$(PACKAGES),$(eval $(call package_fetch,$(p),$($(p)_FILE),$($(p)_URL))))

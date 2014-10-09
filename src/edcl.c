@@ -12,8 +12,8 @@
 
 #ifdef EDCL_WINDOWS
 #include <winsock2.h>
-#pragma warning( disable : 4996 )
 #include <windows.h>
+#pragma warning( disable : 4996 )
 //#include <Iphlpapi.h>
 #endif
 
