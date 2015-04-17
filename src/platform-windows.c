@@ -93,7 +93,7 @@ void edcl_platform_list_interfaces()
 	pcap_if_t *alldevs;
 	pcap_t *res = NULL;
 	char errbuf[PCAP_ERRBUF_SIZE + 1];
-	
+
 	if(pcap_findalldevs(&alldevs, errbuf) == -1)
 		return;
 	int i=0;
@@ -103,7 +103,50 @@ void edcl_platform_list_interfaces()
 	printf("ProTip(tm): If you do not see your interface here - make sure it is configured\n");
 	printf("            and has some valid IP address set.\n");
 	
-	pcap_freealldevs(alldevs);	
+	pcap_freealldevs(alldevs);
+}
+
+/**
+ * int edcl_platform_ask_interfaces(char *iface_name, size_t iface_name_max_len)
+ *
+ * @retrun 0 - interface name received. 1 - interface name is not received. -1 - an error has occurred.
+ */
+int edcl_platform_ask_interfaces(char *iface_name, size_t iface_name_max_len)
+{
+	pcap_if_t *alldevs;
+	pcap_t *res = NULL;
+	char errbuf[PCAP_ERRBUF_SIZE + 1];
+	unsigned iface_n;
+	unsigned exit_item_n;
+
+	if(pcap_findalldevs(&alldevs, errbuf) == -1)
+		return;
+	int i=0;
+	for(pcap_if_t *d=alldevs; d && !res; d=d->next) {
+		printf("%d). %s\n    %s\n\n", i++, d->name, d->description);
+	}
+	pcap_freealldevs(alldevs);
+	exit_item_n = i;
+	printf("%d). exit\n\n", exit_item_n);
+
+	while(1) {
+		printf("Enter interface number > ");
+
+		if(fgets(iface_name, iface_name_max_len, stdin) == NULL)
+			return -1;
+
+		if((sscanf(iface_name, "%ud\r", &iface_n) != 1) || (iface_n > exit_item_n)) {
+			printf("Invalid interface number. Please try again.\n");
+			continue;
+		}
+
+		if(iface_n == exit_item_n)
+			return 1;
+
+		break;
+	}
+
+	return 0;
 }
 
 static pcap_t *select_interface_by_id(int id) 

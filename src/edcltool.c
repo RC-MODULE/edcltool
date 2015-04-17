@@ -33,7 +33,8 @@ void usage(char* app)
 #ifndef EDCL_WINDOWS 
 		"-i interface      Use this interface (default - eth0) \n"
 #else
-		"-i interface      Use this interface (Number). Use -l to list them\n"
+		"-i interface      Use this interface (Number). interface=ask selection for menu\n"
+		"                  Use -l to list available network interfaces\n"
 #endif
 		"-b address        Specify board address (default - 192.168.0.0) \n"
 		"-s address        Specify self address (default - 192.168.0.1) \n"
@@ -46,9 +47,11 @@ void usage(char* app)
 	exit(1);
 }
 
-#ifndef EDCL_WINDOWS 
+#ifndef EDCL_WINDOWS
 static	char* default_iface = "eth0";
 #else
+#define IFACE_NAME_MAX_LEN 256
+char iface_name[IFACE_NAME_MAX_LEN];
 static	char* default_iface = "0";
 #endif
 
@@ -592,6 +595,15 @@ int main(int argc, char** argv) {
 			usage(argv[0]);
 		}
 	};
+
+#ifdef EDCL_WINDOWS
+	if(strcmp(default_iface, "ask") == 0) {
+		if(edcl_platform_ask_interfaces(iface_name, IFACE_NAME_MAX_LEN))
+			exit(1);
+		default_iface = iface_name;
+	}
+#endif
+
 
 	luaL_loadbuffer(L, setup_paths, strlen(setup_paths), "shell") ||
 		lua_pcall(L, 0, 0, 0);

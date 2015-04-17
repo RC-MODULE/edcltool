@@ -70,6 +70,9 @@ extern struct edcl_chip_config g_edcl_chips[];
 /* EDCL Platform functions */
 size_t edcl_platform_get_maxpacket();
 void edcl_platform_list_interfaces();
+#ifndef EDCL_WINDOWS
+int edcl_platform_ask_interfaces(char *iface_name, size_t iface_name_max_len);
+#endif
 int edcl_platform_init(const char* name, struct edcl_chip_config *chip);
 int edcl_platform_send(const void* data, size_t len);
 int edcl_platform_recv(void* data, size_t len);
