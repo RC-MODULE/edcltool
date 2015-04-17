@@ -109,27 +109,45 @@ void edcl_platform_list_interfaces()
 static pcap_t *select_interface_by_id(int id) 
 {
 	pcap_if_t *alldevs;
+	pcap_if_t *dev;
 	pcap_t *res = NULL;
 	char errbuf[PCAP_ERRBUF_SIZE + 1];
-	
-	if(pcap_findalldevs(&alldevs, errbuf) == -1)
-		return NULL;
+	int i;
 
-	int i=0;
-	for(pcap_if_t *d=alldevs; d && !res; d=d->next) {
-		if ( i++ == id) { 
-			res = pcap_open_live(d->name, 65536, 1, 1000, errbuf);
-			if(res)
-				pcap_setmintocopy(res, 0);				
+	if(pcap_findalldevs_ex("rpcap://", NULL, &alldevs, errbuf) == -1) { /* TODO: "rpcap://" -> PCAP_SRC_IF_STRING */
+		fprintf(stderr,"Error in pcap_findalldevs_ex: %s\n", errbuf);
+		return NULL;
+	}
+
+	for(dev=alldevs, i=0; dev != NULL; dev=dev->next, i++ ) {
+		if(i == id) {
+			res = pcap_open(dev->name,
+					2048,	/* TODO: ? */
+					1 | 16,	/* TODO: 1 | 16 -> PCAP_OPENFLAG_PROMISCUOUS | PCAP_OPENFLAG_MAX_RESPONSIVENESS */
+					1000,
+					NULL,
+					errbuf);
+
+			if(!res) {
+				fprintf(stderr,"Unable to open the adapter.\n");
+				return NULL;
+			}
+
+			pcap_setmintocopy(res, 0);
+
+			break;
 		}
 	}
-	
-	pcap_freealldevs(alldevs);	
+
+	if(dev == 0) {
+		printf("No interfaces found!\n");
+		return NULL;
+	}
+
+	pcap_freealldevs(alldevs);
+
 	return res;
-	
 }
-
-
 
 int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 {
@@ -154,6 +172,10 @@ int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 	psendpacket->hdr.ip.ip_hl    = 5;
 	psendpacket->hdr.ip.ip_p     = 0x11;
 	psendpacket->hdr.ip.ip_ttl   = 1;
+
+	psendpacket->hdr.ip.ip_src.s_addr = 0x0100a8c0;
+	psendpacket->hdr.ip.ip_dst.s_addr = 0x0000a8c0;
+
 	psendpacket->hdr.udp.source  = chip->local_port;
 	psendpacket->hdr.udp.dest    = chip->remote_port;
 
@@ -183,9 +205,9 @@ int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 		fprintf(stderr, "Failed to set filter\n");
 		goto errfree;
 	}
-	
+
 	memcpy(psendpacket->hdr.eth.h_source, chip->local_mac, MAC_ADDR_LEN);
-	
+
 	return 0;
 errfree:
 //	if (ppcap)
@@ -202,7 +224,6 @@ int edcl_platform_send(const void* data, size_t len)
 	memcpy(psendpacket->data, data, len);
 	return pcap_sendpacket(ppcap, (const u_char *) psendpacket, len + sizeof(struct S_Packet) - 1);
 }
-
 
 
 int edcl_platform_recv(void* data, size_t len)

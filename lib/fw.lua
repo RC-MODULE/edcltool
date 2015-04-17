@@ -28,7 +28,6 @@ end
 
 
 function fw.mboot_cmd(cmd)
-   print("Running: "..cmd);
    edcl_writestring(cmdaddr, cmd);
    magic(0xdeadbeaf);
    wait_nmagic(0xdeadbeaf);
@@ -62,8 +61,6 @@ function fw.flash_part(part, file, withoob)
    psize,es = shift_read(8, es);
    wsize = shift_read(4, es);
    
-   print("mtd: partition "..part.." erasesize "..erase.." oob "..oob);
-   print("mtd: size "..psize.." writesize "..wsize);
 
    if withoob then 
       oob_per_eraseblock = (erase / writesize) * oob
@@ -80,7 +77,8 @@ function fw.flash_part(part, file, withoob)
       return -1;
    end
 
-   print("chunksize " .. chunksize);
+   print("mtd: partition "..part.." erasesize "..erase.." oob "..oob);
+   print("mtd: size "..psize.." writesize "..wsize.." chunksize "..chunksize);
    offset = 0;
 
    magic(0xa1);
@@ -107,17 +105,14 @@ end
 function fw.run_code(file, slavemode)
    edcl_upload(mbootoffs, file);
    magic(0x0); -- in case something left after soft-reset
-   print("Starting code...")
    if (slavemode) then
-      print("Slave mode enabled");
       magic(0xdeadc0de);
    end
    edcl_write(4, RUNPTR, TEXT_BASE);
    if (slavemode) then
-      print('Waiting for board to respond');
+      print('Waiting for target board to respond...');
       edcl_nwait(4,0x00100000,0xdeadc0de);
       cmdaddr = edcl_read(4,0x00100000);
-      print('Command handle obtained!');
    end
 end
 
@@ -135,7 +130,6 @@ local mboot_burn_cmds = {
 function fw.write_bootloader(file)
    edcl_upload(RAM_BASE, file);
    fw.mboot_cmd_list(mboot_burn_cmds);
-   print("Bootloader burned & ready")
 end
 
 function fw.partition(tbl)

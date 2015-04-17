@@ -80,7 +80,6 @@ static int l_edcl_filesize(lua_State *L) {
 	if (argc!=1)
 		printf("FATAL: incorrect number of args to edlc_fsize\n"),exit(EXIT_FAILURE);
 	const char* filename = lua_tostring(L, 1);
-	printf("%s\n", filename);
 	ret = stat(filename, &st);
 	if (ret == 0) { 
 		size = (uint64_t) st.st_size;
@@ -364,16 +363,16 @@ static int l_edcl_upload_chunk (lua_State *L) {
 		addr+=n;
 		sz-=n;
 		written += n;
-		if (!silent)
+	}
+
+	if (!silent && written) {
+		if (offset + written >= maxsz) { 
+			display_progressbar(maxsz, 0);
+			printf(" done\n");
+		} else 
 			display_progressbar(maxsz, maxsz - offset);
 	}
 
-	if (offset + written == maxsz) { 
-		if (!silent) {
-			display_progressbar(maxsz, 0);
-			printf(" done\n");
-		}
-	}
 	fclose(fd);
 	lua_pushnumber(L, written);
 	return 1;
@@ -399,6 +398,7 @@ static int l_edcl_upload (lua_State *L) {
 	char tmp[2048];
 	int n, k; 
 	int maxsz = sz;
+	int nsent = 0; 
 	fflush(stdout);
 	while (sz)
 	{
@@ -413,7 +413,9 @@ static int l_edcl_upload (lua_State *L) {
 
 		addr+=n;
 		sz-=n;
-		display_progressbar(maxsz,sz);
+		nsent++;
+		if (0 == (nsent % 64))
+			display_progressbar(maxsz, sz);
 	}
 	display_progressbar(maxsz, 0);
 	printf(" done\n");
@@ -594,10 +596,7 @@ int main(int argc, char** argv) {
 	luaL_loadbuffer(L, setup_paths, strlen(setup_paths), "shell") ||
 		lua_pcall(L, 0, 0, 0);
 
-	printf("Loading edcl script: %s\n", file);
         int s = luaL_loadfile(L, file);
-	
-        printf("Done with result %d\n", s);
         if ( s==0 ) {
                 s = lua_pcall(L, 0, LUA_MULTRET, 0);
 		if ( s!=0 ) 
