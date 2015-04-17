@@ -202,7 +202,7 @@ int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 	char mac[] = { 0x14, 0xda, 0xe9, 0x5e, 0x9e, 0x9f };
 
 	memcpy(chip->local_mac, mac, 6);;
-	psendpacket = (struct S_Packet*) malloc(sizeof(struct S_Packet) -1 + chip->maxpayload);
+	psendpacket = (struct S_Packet*) malloc(sizeof(struct S_Packet) -1 + sizeof(struct EdclPacket) + chip->maxpayload);
 	if(!psendpacket) {
 		fprintf(stderr, "Memory allocation error\n");
 		goto err;
