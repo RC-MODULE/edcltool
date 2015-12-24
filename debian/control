@@ -1,0 +1,15 @@
+Source: edcltool
+Section: unknown
+Priority: optional
+Maintainer: Andrew 'Necromant' Andrianov <andrew@ncrmnt.org>
+Build-Depends: debhelper (>= 9), autotools-dev, libelfg0-dev, liblua5.2-dev
+Standards-Version: 3.9.5
+Homepage: <insert the upstream URL, if relevant>
+#Vcs-Git: git://anonscm.debian.org/collab-maint/edcltool.git
+#Vcs-Browser: http://anonscm.debian.org/?p=collab-maint/edcltool.git;a=summary
+
+Package: edcltool
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, liblua5.2-0, libelfg0
+Description: Universal scriptable EDCL tool
+ You'll need this to hack around MB77.07 and other RC Module's SoCs 
