@@ -2,18 +2,19 @@
 #define __EDCL_H__
 
 #include <stdlib.h>
+#include "stdbool.h"
 
 
 struct edcl_chip_config {
 	char* name;
-	char* board_addr; 
+	char* board_addr;
 	char* host_addr;
 	int maxpayload;
 	int local_port;
 	int remote_port;
 	char local_mac[6];
 	char remote_mac[6];
-	
+
 };
 
 struct EdclPacket {
@@ -29,37 +30,38 @@ struct EdclPacket {
 #define MAC_ADDR_LEN 6
 #endif
 
-/** 
- * 
+/**
+ *
  * Set the communications profile to use
  * Call this before edcl_init
- * 
+ *
  * @param profile Profile from edcl_platforms enum
- * 
+ *
  * @return 0 on success, -1 on failure (no such profile)
  */
 int edcl_set_profile(char* name);
 
 
-/** 
- * Get the maximum payload for edcl communications 
+/**
+ * Get the maximum payload for edcl communications
  * This is chip specific
- * 
+ *
  * @return Maximum size of payload for read/write
  */
 int edcl_get_max_payload();
 
 
-/** 
- * 
+/**
+ *
  * Initialise edcl communications
- * 
+ *
  * @param iname interface name, e.g. eth0
- * 
- * @return 
+ *
+ * @return
  */
 
-int edcl_init(const char* iname);
+bool isInit(const char* ifname, struct edcl_chip_config* chip_conf);
+const char* edcl_init(const char* iname);
 int edcl_read(unsigned int address, void* buffer, size_t len);
 int edcl_write(unsigned int address, const void* buffer, size_t len);
 

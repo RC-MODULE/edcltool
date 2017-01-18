@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <libgen.h>
 #include <edcl.h>
+#include <sys/errno.h>
 
 #ifndef EDCL_WINDOWS
 #include <sys/ioctl.h>
@@ -30,7 +31,7 @@ void usage(char* app)
 	printf(
 		"EDCL scripting interpreter\n"
 		"Usage %s [options]\n"
-#ifndef EDCL_WINDOWS 
+#ifndef EDCL_WINDOWS
 		"-i interface      Use this interface (default - eth0) \n"
 #else
 		"-i interface      Use this interface (Number). interface=ask selection for menu\n"
@@ -57,10 +58,16 @@ static	char* default_iface = "0";
 
 
 static int l_edcl_init (lua_State *L) {
-	int r = edcl_init(default_iface);
-	if (-1==r)
-		perror("edcl_init:"), exit(EXIT_FAILURE);
-	return 0;  /* number of results */
+  int ret = 0; /* number of results */
+	const char* r = edcl_init(default_iface);
+	if (NULL==r) {
+      printf("Tra-rara\n" );
+      return luaL_error(L, "edcl init %s", strerror(errno));
+    } else {
+      lua_pushstring(L, r);
+      ret = 1;
+}
+  return ret;
 }
 
 
@@ -70,21 +77,21 @@ static int l_edcl_writestring (lua_State *L) {
 		printf("FATAL: incorrect number of args to edlc_write\n"),exit(EXIT_FAILURE);
 	unsigned int addr = lua_tonumber(L, 1);
 	const char* hexstr = lua_tostring(L, 2);
-	edcl_write(addr, hexstr, strlen(hexstr)+1);	
+	edcl_write(addr, hexstr, strlen(hexstr)+1);
 	return 0;
 }
 
 
 static int l_edcl_filesize(lua_State *L) {
 	struct stat st;
-	uint64_t size; 
+	uint64_t size;
 	int ret;
 	int argc = lua_gettop(L);
 	if (argc!=1)
 		printf("FATAL: incorrect number of args to edlc_fsize\n"),exit(EXIT_FAILURE);
 	const char* filename = lua_tostring(L, 1);
 	ret = stat(filename, &st);
-	if (ret == 0) { 
+	if (ret == 0) {
 		size = (uint64_t) st.st_size;
 		lua_pushnumber(L,size);
 	} else {
@@ -95,7 +102,7 @@ static int l_edcl_filesize(lua_State *L) {
 }
 
 static int l_edcl_write (lua_State *L) {
-	
+
 	int argc = lua_gettop(L);
 	if (argc!=3)
 		printf("FATAL: incorrect number of args to edlc_write\n"),exit(EXIT_FAILURE);
@@ -124,7 +131,7 @@ static int l_edcl_write (lua_State *L) {
 			strncpy(tmp,&hexstr[j],2);
 			sscanf(tmp, "%hhx", &buffer[i]);
 		}
-		
+
 		ret = edcl_write(addr, buffer, ret/2);
 		free(buffer);
 		break;
@@ -156,7 +163,7 @@ static int l_edcl_write (lua_State *L) {
 		edcl_init(default_iface);
 		return l_edcl_write(L);;
 	}
-	
+
 	return 0;  /* number of results */
 }
 
@@ -201,7 +208,7 @@ static int l_edcl_nwait (lua_State *L) {
 			if (v32 != (unsigned int) expected) return 0;
 			break;
 		default:
-			printf("FATAL: unexpected op to edcl_wait\b"); 
+			printf("FATAL: unexpected op to edcl_wait\b");
 			exit(EXIT_FAILURE);
 		}
 		if (ret == -1)
@@ -242,7 +249,7 @@ static int l_edcl_wait (lua_State *L) {
 			if (v32 == (unsigned int) expected) return 0;
 			break;
 		default:
-			printf("FATAL: unexpected op to edcl_wait\b"); 
+			printf("FATAL: unexpected op to edcl_wait\b");
 			exit(EXIT_FAILURE);
 		}
 		if (ret == -1)
@@ -259,8 +266,10 @@ static int l_edcl_wait (lua_State *L) {
 
 static int l_edcl_read (lua_State *L) {
 	int argc = lua_gettop(L);
-	if (argc!=2)
-		printf("FATAL: incorrect number of args to edlc_read\n"),exit(EXIT_FAILURE);
+	if (argc!=2) {
+		printf("FATAL: incorrect number of args to edlc_read\n");
+    exit(EXIT_FAILURE);
+  }
 	int bytes = lua_tonumber(L, 1);
 	unsigned int addr = lua_tonumber(L, 2);
 	char tmp[8];
@@ -286,20 +295,20 @@ static int l_edcl_read (lua_State *L) {
 	}
 
 	return 1;
-	
+
 }
 
 
 
 static void display_progressbar(int max, int value)
 {
-	float percent = 100.0 - (float) value * 100.0 / (float) max; 
-	int cols; 
+	float percent = 100.0 - (float) value * 100.0 / (float) max;
+	int cols;
 #ifndef EDCL_WINDOWS
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	cols = w.ws_col;
-#else 
+#else
 	cols = 40;
 #endif
 	int txt = printf("\r %.02f %% done [", percent);
@@ -307,7 +316,7 @@ static void display_progressbar(int max, int value)
 	int bars = max_bars - (int)(((float) value * max_bars) / (float) max);
 
 	if (max_bars > 0) {
-		int i;		
+		int i;
 		for (i=0; i<bars; i++)
 			printf("#");
 		for (i=bars; i<max_bars; i++)
@@ -323,7 +332,7 @@ static int l_edcl_upload_chunk (lua_State *L) {
 	int argc = lua_gettop(L);
 
 	if (argc!=4 && argc!=5)
-		printf("FATAL: incorrect number of args to edlc_upload\n"),exit(EXIT_FAILURE);	
+		printf("FATAL: incorrect number of args to edlc_upload\n"),exit(EXIT_FAILURE);
 
 	unsigned int addr = lua_tonumber(L, 1);
 	const char* filename = lua_tostring(L, 2);
@@ -332,7 +341,7 @@ static int l_edcl_upload_chunk (lua_State *L) {
 	int silent = 0;
 	if (argc>4)
 		silent = lua_tonumber(L, 5);
-		
+
 	if (0!=access(filename, R_OK)) {
 		lua_pushnumber(L, -1);
 		return 1;
@@ -343,7 +352,7 @@ static int l_edcl_upload_chunk (lua_State *L) {
 	unsigned int sz = (unsigned int) buf.st_size;
 	FILE* fd = fopen(filename, "rb");
 	unsigned char tmp[2048];
-	int n, k; 
+	int n, k;
 	int maxsz = sz;
 	int written=0;
 	fseek(fd, offset, SEEK_SET);
@@ -355,10 +364,10 @@ static int l_edcl_upload_chunk (lua_State *L) {
 		n = fread(tmp, 1, (sz > edcl_get_max_payload()) ? edcl_get_max_payload() : sz, fd);
 		if (n<=0)
 			break;
-		
+
 	retry:
 		k = edcl_write(addr, tmp, n);
-		if (k<0) 
+		if (k<0)
 		{
 			edcl_init(default_iface);
 			goto retry;
@@ -369,10 +378,10 @@ static int l_edcl_upload_chunk (lua_State *L) {
 	}
 
 	if (!silent && written) {
-		if (offset + written >= maxsz) { 
+		if (offset + written >= maxsz) {
 			display_progressbar(maxsz, 0);
 			printf(" done\n");
-		} else 
+		} else
 			display_progressbar(maxsz, maxsz - offset);
 	}
 
@@ -385,7 +394,7 @@ static int l_edcl_upload_chunk (lua_State *L) {
 static int l_edcl_upload (lua_State *L) {
 	int argc = lua_gettop(L);
 	if (argc!=2)
-		printf("FATAL: incorrect number of args to edlc_upload\n"),exit(EXIT_FAILURE);	
+		printf("FATAL: incorrect number of args to edlc_upload\n"),exit(EXIT_FAILURE);
 	unsigned int addr = lua_tonumber(L, 1);
 	const char* filename = lua_tostring(L, 2);
 	printf("Uploading %s to 0x%X\n", filename, addr);
@@ -399,16 +408,16 @@ static int l_edcl_upload (lua_State *L) {
 	printf("Filesize: %d bytes maxpayload %d\n", sz, edcl_get_max_payload());
 	FILE* fd = fopen(filename, "rb");
 	char tmp[2048];
-	int n, k; 
+	int n, k;
 	int maxsz = sz;
-	int nsent = 0; 
+	int nsent = 0;
 	fflush(stdout);
 	while (sz)
 	{
 		n = fread(tmp, 1, edcl_get_max_payload(), fd);
 	retry:
 		k = edcl_write(addr, tmp, n);
-		if (k<0) 
+		if (k<0)
 		{
 			edcl_init(default_iface);
 			goto retry;
@@ -439,7 +448,7 @@ static int l_edcl_download (lua_State *L) {
 	printf("Filesize: %d bytes\n", sz);
 	FILE* fd = fopen(filename, "w+");
 	char tmp[2048];
-	int n,i=0; 
+	int n,i=0;
 	fflush(stdout);
 	int maxsz = sz;
 	while (sz)
@@ -449,7 +458,7 @@ static int l_edcl_download (lua_State *L) {
 		fwrite(tmp, 1, n, fd);
 		addr+=n;
 		sz-=n;
-		display_progressbar(maxsz,sz); 
+		display_progressbar(maxsz,sz);
 	}
 	printf("\n Download complete \n");
 	lua_pushnumber(L,0);
@@ -481,7 +490,7 @@ static int l_edcl_hexdump (lua_State *L) {
 		addr+=n;
 		sz-=n;
 		i++;
-		
+
 		if (i % 64 == 0)
 			printf("\n %d bytes | ", i*128 );
 		printf("#");
@@ -495,21 +504,21 @@ static int l_edcl_hexdump (lua_State *L) {
 
 void bind_edcl_functions(lua_State* L){
 	lua_pushcfunction(L, l_edcl_init);
-	lua_setglobal(L, "edcl_init");	
+	lua_setglobal(L, "edcl_init");
 	lua_pushcfunction(L, l_edcl_write);
-	lua_setglobal(L, "edcl_write");	
+	lua_setglobal(L, "edcl_write");
 	lua_pushcfunction(L, l_edcl_wait);
-	lua_setglobal(L, "edcl_wait");	
+	lua_setglobal(L, "edcl_wait");
 	lua_pushcfunction(L, l_edcl_nwait);
-	lua_setglobal(L, "edcl_nwait");	
+	lua_setglobal(L, "edcl_nwait");
 	lua_pushcfunction(L, l_edcl_read);
-	lua_setglobal(L, "edcl_read");		
+	lua_setglobal(L, "edcl_read");
 	lua_pushcfunction(L, l_edcl_setwait);
-	lua_setglobal(L, "edcl_poll_interval");	
+	lua_setglobal(L, "edcl_poll_interval");
 	lua_pushcfunction(L, l_edcl_upload);
-	lua_setglobal(L, "edcl_upload");	
+	lua_setglobal(L, "edcl_upload");
 	lua_pushcfunction(L, l_edcl_download);
-	lua_setglobal(L, "edcl_download");	
+	lua_setglobal(L, "edcl_download");
 	lua_pushcfunction(L, l_edcl_hexdump);
 	lua_setglobal(L, "edcl_hexdump");
 	lua_pushcfunction(L, l_edcl_writestring);
@@ -541,7 +550,7 @@ void interactive_loop(lua_State* L) {
 		int error = luaL_loadbuffer(L, input, strlen(input), "shell") ||
 			lua_pcall(L, 0, 0, 0);
 		report_errors(L,error);
- 
+
 		free(input);
 	}
 }
@@ -564,10 +573,9 @@ const char setup_paths[] =						\
 
 #define PROGNAME "edcltool"
 int main(int argc, char** argv) {
-	
-	size_t address;
-        lua_State* L = luaL_newstate();
-        luaL_openlibs(L);
+
+  lua_State* L = luaL_newstate();
+  luaL_openlibs(L);
 	bind_edcl_functions(L);
 	int opt;
 	if (argc<2){
@@ -611,7 +619,7 @@ int main(int argc, char** argv) {
         int s = luaL_loadfile(L, file);
         if ( s==0 ) {
                 s = lua_pcall(L, 0, LUA_MULTRET, 0);
-		if ( s!=0 ) 
+		if ( s!=0 )
 			report_errors(L, s);
         }
         report_errors(L, s);

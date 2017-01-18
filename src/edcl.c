@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdbool.h>
 
 
 
@@ -24,16 +25,22 @@
 #define GNULIB_defined_EPROTO 1
 #endif
 
+#define ARRAY_SIZE(a)                               \
+  ((sizeof(a) / sizeof(*(a)))
+
+#define CHIPS_ARRAY_SIZE() ARRAY_SIZE(g_edcl_chips)
+
+
 static int seq = -1;
-static struct edcl_chip_config *chip_config = &g_edcl_chips[0]; 
+static struct edcl_chip_config *chip_config = &g_edcl_chips[0];
 static int LOCAL_IP;
-static int REMOTE_IP; 
+static int REMOTE_IP;
 static int initialized;
 
 
 int edcl_set_profile(char* name) {
 	struct chip_config *conf = &g_edcl_chips[0];
-	
+
 }
 
 int edcl_get_max_payload() {
@@ -65,39 +72,54 @@ int edcl_recv(void* buf, size_t len) {
 }
 
 
-int edcl_init(const char* ifname) {
-	int i;
-
+const char* edcl_init(const char* ifname) {
 	seq = 0;
 
-	edcl_platform_init(ifname, chip_config);
+  const char *ret = NULL;
+	struct edcl_chip_config *i;
 
-	struct EdclPacket rq = { .control = edcl_control(0, 0, 0) };
+	for(i = &g_edcl_chips[0]; i->name; i++) {
 
-	for(i = 0; i < 3; ++i) {
-		if(edcl_send(&rq, sizeof(rq))) {
-			fprintf(stderr, "edcl_init: Failed to send pkt\n");
-			return -1; 
-		}
-		struct EdclPacket rs;
-		if(edcl_recv(&rs, sizeof(rs)) && rs.address == rq.address && edcl_len(&rs) == edcl_len(&rq)) {
-			seq = edcl_seq(&rs);
-			initialized++;
-			return 0;
-		}
+		struct edcl_chip_config *chip_conf = i;
+		if(isInit(ifname, chip_conf)) {
+      ret = i->name;
+      break;
+    }
 	}
-	fprintf(stderr, "edcl_init: Board not responding (Is it powered on?)\n");
-	return -1;
+	return ret;
+}
+
+bool isInit(const char* ifname, struct edcl_chip_config* chip_conf) {
+	bool isInit = false;
+
+	struct EdclPacket rq = {
+		.control = edcl_control(0, 0, 0)
+	};
+
+	edcl_platform_init(ifname, chip_conf);
+
+	if(edcl_send(&rq, sizeof(rq))) {
+		//fprintf(stderr, "edcl_init: Failed to send pkt\n");
+		isInit = false;
+	}
+	struct EdclPacket rs;
+	if(edcl_recv(&rs, sizeof(rs)) && rs.address == rq.address && edcl_len(&rs) == edcl_len(&rq)) {
+		seq = edcl_seq(&rs);
+		initialized++;
+		isInit = true;
+	}
+
+	return isInit;
 }
 
 
 int edcl_transaction(struct EdclPacket* rq, size_t rqlen, struct EdclPacket* rs, size_t rslen) {
 	int i;
 	for(i = 0; i < 5; ++i) {
-		if(edcl_send(rq, rqlen)) 
+		if(edcl_send(rq, rqlen))
 			return -1;
 		ssize_t n = edcl_recv(rs, rslen);
-		if(n < 0) 
+		if(n < 0)
 			return -1;
 
 		if(edcl_rwnak(rs)) {
@@ -112,16 +134,16 @@ int edcl_transaction(struct EdclPacket* rq, size_t rqlen, struct EdclPacket* rs,
 	return 0;
 }
 
-static void check_initialized() 
+static void check_initialized()
 {
-	if (!initialized) { 
+	if (!initialized) {
 		fprintf(stderr, "FATAL: Trying to do something without calling 'edcl_init' first\n");
 		fprintf(stderr, "       Looks like a bug in your script\n");
 		exit(1);
 	}
 }
 
-int edcl_read(unsigned int address, void* obuf, size_t len) 
+int edcl_read(unsigned int address, void* obuf, size_t len)
 {
 	check_initialized();
 	if(len > edcl_platform_get_maxpacket()) {
@@ -135,7 +157,7 @@ int edcl_read(unsigned int address, void* obuf, size_t len)
 	char buf[2000];
 	struct EdclPacket* rs = (struct EdclPacket*)buf;
 	ssize_t n = edcl_transaction(&rq, sizeof(rq), rs, sizeof(buf));
-	
+
 	if(n < len + sizeof(*rs)) {
 		errno = EPROTO;
 		return -1;
@@ -170,4 +192,3 @@ int edcl_write(unsigned int address, const void* ibuf, size_t len) {
 	memcpy(buf + sizeof(*rq), ibuf, len);
 	return edcl_transaction(rq, sizeof(*rq) + len, &rs, sizeof(rs)) > 0 ? 0 : -1;
 }
-
