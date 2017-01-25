@@ -61,7 +61,6 @@ static int l_edcl_init (lua_State *L) {
   int ret = 0; /* number of results */
 	const char* r = edcl_init(default_iface);
 	if (NULL==r) {
-      printf("Tra-rara\n" );
       return luaL_error(L, "edcl init %s", strerror(errno));
     } else {
       lua_pushstring(L, r);
@@ -439,8 +438,10 @@ static int l_edcl_upload (lua_State *L) {
 
 static int l_edcl_download (lua_State *L) {
 	int argc = lua_gettop(L);
-	if (argc!=3)
-		printf("FATAL: incorrect number of args to edlc_download\n"),exit(EXIT_FAILURE);
+	if (argc!=3) {
+		printf("FATAL: incorrect number of args to edlc_download\n");
+    exit(EXIT_FAILURE);
+  }
 	unsigned int addr = lua_tonumber(L, 1);
 	const char* filename = lua_tostring(L, 2);
 	unsigned int sz = lua_tonumber(L, 3);

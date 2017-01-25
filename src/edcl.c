@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 
 
@@ -30,21 +31,21 @@
 
 #define CHIPS_ARRAY_SIZE() ARRAY_SIZE(g_edcl_chips)
 
+#define __swap32(value)                                 \
+        ((((uint32_t)((value) & 0x000000FF)) << 24) |   \
+         (((uint32_t)((value) & 0x0000FF00)) << 8) |    \
+         (((uint32_t)((value) & 0x00FF0000)) >> 8) |    \
+         (((uint32_t)((value) & 0xFF000000)) >> 24))
+
 
 static int seq = -1;
-static struct edcl_chip_config *chip_config = &g_edcl_chips[0];
+static struct edcl_chip_config *chip_config;
 static int LOCAL_IP;
 static int REMOTE_IP;
 static int initialized;
 
-
-int edcl_set_profile(char* name) {
-	struct chip_config *conf = &g_edcl_chips[0];
-
-}
-
 int edcl_get_max_payload() {
-	return chip_config->maxpayload;
+		return chip_config->maxpayload;
 }
 
 unsigned int edcl_seq(struct EdclPacket const* p) {
@@ -71,6 +72,29 @@ int edcl_recv(void* buf, size_t len) {
 	return edcl_platform_recv(buf, len);
 }
 
+bool edcl_test_init(const char* ifname, struct edcl_chip_config* chip_conf)
+{
+	bool is_init = false;
+
+	struct EdclPacket rq = {
+		.control = edcl_control(0, 0, 0)
+	};
+
+	edcl_platform_init(ifname, chip_conf);
+
+	struct EdclPacket rs;
+
+	if(edcl_send(&rq, sizeof(rq))) {
+		fprintf(stderr, "edcl_init: Failed to send pkt\n");
+		is_init = false;
+	}else if(edcl_recv(&rs, sizeof(rs)) && rs.address == rq.address && edcl_len(&rs) == edcl_len(&rq)) {
+		seq = edcl_seq(&rs);
+		initialized++;
+		is_init = true;
+	}
+
+	return is_init;
+}
 
 const char* edcl_init(const char* ifname) {
 	seq = 0;
@@ -79,39 +103,16 @@ const char* edcl_init(const char* ifname) {
 	struct edcl_chip_config *i;
 
 	for(i = &g_edcl_chips[0]; i->name; i++) {
-
-		struct edcl_chip_config *chip_conf = i;
-		if(isInit(ifname, chip_conf)) {
+		chip_config = i;
+		edcl_set_swap_need_flag(chip_config);
+		//Check endianness
+		if(edcl_test_init(ifname, chip_config)) {
       ret = i->name;
       break;
     }
 	}
 	return ret;
 }
-
-bool isInit(const char* ifname, struct edcl_chip_config* chip_conf) {
-	bool isInit = false;
-
-	struct EdclPacket rq = {
-		.control = edcl_control(0, 0, 0)
-	};
-
-	edcl_platform_init(ifname, chip_conf);
-
-	if(edcl_send(&rq, sizeof(rq))) {
-		//fprintf(stderr, "edcl_init: Failed to send pkt\n");
-		isInit = false;
-	}
-	struct EdclPacket rs;
-	if(edcl_recv(&rs, sizeof(rs)) && rs.address == rq.address && edcl_len(&rs) == edcl_len(&rq)) {
-		seq = edcl_seq(&rs);
-		initialized++;
-		isInit = true;
-	}
-
-	return isInit;
-}
-
 
 int edcl_transaction(struct EdclPacket* rq, size_t rqlen, struct EdclPacket* rs, size_t rslen) {
 	int i;
@@ -155,7 +156,7 @@ int edcl_read(unsigned int address, void* obuf, size_t len)
 
 	struct EdclPacket rq = {.control = edcl_control(seq++, 0, len), .address = address };
 	char buf[2000];
-	struct EdclPacket* rs = (struct EdclPacket*)buf;
+	struct EdclPacket* rs = (struct EdclPacket*) buf;
 	ssize_t n = edcl_transaction(&rq, sizeof(rq), rs, sizeof(buf));
 
 	if(n < len + sizeof(*rs)) {
@@ -168,27 +169,57 @@ int edcl_read(unsigned int address, void* obuf, size_t len)
 		return -1;
 	}
 
-	memcpy(obuf, buf + sizeof(*rs), len);
+	if(chip_config->need_swap)  {
+		uint32_t *srcptr = (uint32_t *) (buf + sizeof(*rs));
+		uint32_t *destptr = (uint32_t *) obuf;
+
+  	int num = len / sizeof(uint32_t);
+		int i;
+		for(i=0; i<num; ++i) {
+			*destptr++ = __swap32(*srcptr);
+			srcptr++;
+		}
+	}
+	else {
+		memcpy(obuf, buf + sizeof(*rs), len);
+	}
 	return 0;
 }
 
 int edcl_write(unsigned int address, const void* ibuf, size_t len) {
 	char buf[2000] = {0};
+
 	check_initialized();
 	struct EdclPacket* rq = (struct EdclPacket*)buf;
 	struct EdclPacket rs;
 
 	if((len > edcl_platform_get_maxpacket()) || len > chip_config->maxpayload) {
 		errno = EINVAL;
-		fprintf(stderr, "payload too large: %zu \n",
-			len );
+		fprintf(stderr, "payload too large: %zu \n", len );
 		return -1;
 	}
-
 
 	rq->address = htonl(address);
 	rq->control = edcl_control(seq++, 1, len);
 
-	memcpy(buf + sizeof(*rq), ibuf, len);
+	if(chip_config->need_swap) {
+    const uint32_t *srcptr = ibuf;
+    uint32_t *destptr = (uint32_t *) (buf + sizeof(*rq));
+
+  	int num = len / sizeof(uint32_t);
+  	//If number isn't a whole number, we will get the problems!
+  	//Exeption!
+  	if(len % sizeof(uint32_t) != 0)
+  		perror("Data isn't correct!");
+
+  	int i;
+  	for(i=0; i<num; ++i) {
+  		*destptr++ = __swap32(*srcptr);
+			srcptr++;
+  	}
+	}
+	else {
+		memcpy(buf + sizeof(*rq), ibuf, len);
+	}
 	return edcl_transaction(rq, sizeof(*rq) + len, &rs, sizeof(rs)) > 0 ? 0 : -1;
 }

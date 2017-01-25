@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <edcl.h>
+#include <stdint.h>
+
 
 
 int main(int argc, char* argv[]) {

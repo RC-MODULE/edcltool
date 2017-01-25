@@ -5,6 +5,12 @@
 #include "stdbool.h"
 
 
+enum CHIP_ENDIANNESS
+{
+	ENDIAN_LITTLE=0,
+	ENDIAN_BIG,
+};
+
 struct edcl_chip_config {
 	char* name;
 	char* board_addr;
@@ -14,7 +20,8 @@ struct edcl_chip_config {
 	int remote_port;
 	char local_mac[6];
 	char remote_mac[6];
-
+	enum CHIP_ENDIANNESS endian;
+	bool need_swap
 };
 
 struct EdclPacket {
@@ -59,8 +66,9 @@ int edcl_get_max_payload();
  *
  * @return
  */
-
-bool isInit(const char* ifname, struct edcl_chip_config* chip_conf);
+bool edcl_get_host_endianness();
+void edcl_set_swap_need_flag(struct edcl_chip_config* chip_conf);
+bool edcl_test_init(const char* ifname, struct edcl_chip_config* chip_conf);
 const char* edcl_init(const char* iname);
 int edcl_read(unsigned int address, void* buffer, size_t len);
 int edcl_write(unsigned int address, const void* buffer, size_t len);

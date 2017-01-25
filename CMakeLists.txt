@@ -6,14 +6,14 @@ SET(AURA_API_VERSION  1)
 
 enable_testing()
 
-SET(SRCS 
-  src/chips.c  
-  src/edcl.c  
-  src/elf.c  
-  src/platform-linux.c  
+SET(SRCS
+  src/chips.c
+  src/edcl.c
+  src/elf.c
+  src/platform-linux.c
 )
 
-SET(LUALIBS 
+SET(LUALIBS
   lib/fw.lua
   lib/easynmc.lua
 )
@@ -103,3 +103,27 @@ INSTALL(TARGETS edclstatic ARCHIVE
 INSTALL(FILES ${LUALIBS}
        DESTINATION share/edcltool/${CMAKE_LIBRARY_PATH}/lib/)
 
+
+
+         macro(generate_clang_complete)
+         message(STATUS "Generarating ${CMAKE_SOURCE_DIR}/.clang_complete")
+         get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+         file(WRITE ${CMAKE_SOURCE_DIR}/.clang_complete "")
+         foreach(dir ${dirs})
+           file(APPEND ${CMAKE_SOURCE_DIR}/.clang_complete "-I${dir}\n")
+         endforeach()
+         string(REPLACE "'" "" CMAKE_C_FLAGS_SPLIT ${CMAKE_C_FLAGS})
+         string(REPLACE " " ";" CMAKE_C_FLAGS_SPLIT ${CMAKE_C_FLAGS_SPLIT})
+         foreach(flag ${CMAKE_C_FLAGS_SPLIT})
+         # FixMe: Ugly hack
+           if (NOT "${flag}" MATCHES "-Wall")
+             if (NOT "${flag}" MATCHES "-g")
+               if (NOT "${flag}" MATCHES "-fPIC")
+                 file(APPEND ${CMAKE_SOURCE_DIR}/.clang_complete "${flag}\n")
+               endif()
+             endif()
+           endif()
+         endforeach()
+       endmacro()
+
+generate_clang_complete()
