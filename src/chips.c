@@ -12,7 +12,7 @@ struct edcl_chip_config g_edcl_chips[] = {
 		.endian				= ENDIAN_LITTLE// 0 - little endian, 1 - big endian
 	},
 	{
-		.name					= "MM7705MPW-ETH0",
+		.name					= "MM7705MPW",
     .board_addr		= "192.168.0.48",
     .host_addr		= "192.168.0.1",
     .maxpayload		= 456,
@@ -22,7 +22,7 @@ struct edcl_chip_config g_edcl_chips[] = {
 		.endian				= ENDIAN_BIG
 	},
 	{
-		.name					= "MM7705MPW-ETH1",
+		.name					= "MM7705MPW",
 		.board_addr		= "192.168.0.52",
 		.host_addr		= "192.168.0.1",
 		.maxpayload		= 456,

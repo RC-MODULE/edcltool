@@ -62,10 +62,10 @@ static int l_edcl_init (lua_State *L) {
 	const char* r = edcl_init(default_iface);
 	if (NULL==r) {
       return luaL_error(L, "edcl init %s", strerror(errno));
-    } else {
-      lua_pushstring(L, r);
-      ret = 1;
-}
+  } else {
+    lua_pushstring(L, r);
+    ret = 1;
+  }
   return ret;
 }
 

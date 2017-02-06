@@ -144,8 +144,7 @@ static void check_initialized()
 	}
 }
 
-int edcl_read(unsigned int address, void* obuf, size_t len)
-{
+int edcl_read(unsigned int address, void* obuf, size_t len) {
 	check_initialized();
 	if(len > edcl_platform_get_maxpacket()) {
 		errno = EINVAL;
@@ -200,6 +199,7 @@ int edcl_write(unsigned int address, const void* ibuf, size_t len) {
 	}
 
 	rq->address = htonl(address);
+	//What is this?
 	rq->control = edcl_control(seq++, 1, len);
 
 	if(chip_config->need_swap) {
