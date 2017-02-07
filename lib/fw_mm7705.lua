@@ -8,7 +8,7 @@ fw.run_code = function(file, slavemode)
   if edcl_upload(im0, file) then
     edcl_write(4, im0, bootheader_magic_host_image_valid)
   else
-    error("File didn't write to chip!")
+    error("Failed to upload file or no file found!")
   end
 end
 

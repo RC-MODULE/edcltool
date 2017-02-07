@@ -13,12 +13,9 @@ SET(SRCS
   src/platform-linux.c
 )
 
-SET(LUALIBS
-  lib/fw.lua
-  lib/easynmc.lua
-)
 
-#  src/platform-windows.c
+FILE(GLOB_RECURSE LUALIBS lib/*.lua)
+
 
 FIND_PACKAGE(PkgConfig)
 PKG_CHECK_MODULES(ELF REQUIRED lua5.2)
