@@ -102,7 +102,7 @@ function fw.flash_part(part, file, withoob)
 end
 
 
-function fw.run_code(file, slavemode)
+fw.run_code = function(file, slavemode)
    edcl_upload(mbootoffs, file);
    magic(0x0); -- in case something left after soft-reset
    if (slavemode) then
