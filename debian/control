@@ -10,6 +10,6 @@ Homepage: <insert the upstream URL, if relevant>
 
 Package: edcltool
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, liblua5.2-0, libelf
+Depends: ${shlibs:Depends}, ${misc:Depends}, liblua5.2-0, libelf1
 Description: Universal scriptable EDCL tool
  You'll need this to hack around MB77.07 and other RC Module's SoCs 
