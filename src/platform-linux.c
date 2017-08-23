@@ -107,9 +107,12 @@ int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 		PACKET_HOST
 	};
 
-	if(bind(sock, (struct sockaddr*)&address, sizeof(address))) return -1;
+	if(bind(sock, (struct sockaddr*)&address, sizeof(address)))
+		return -1;
 
-	if(ioctl(sock,SIOCGIFHWADDR, &iface)) return -1;
+	if(ioctl( sock, SIOCGIFHWADDR, &iface))
+		return -1;
+
 	memcpy(chip_config->local_mac, &iface.ifr_hwaddr.sa_data, sizeof(chip_config->local_mac));
 
 	return 0;

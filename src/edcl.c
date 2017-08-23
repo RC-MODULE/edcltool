@@ -80,20 +80,26 @@ bool edcl_test_init(const char* ifname, struct edcl_chip_config* chip_conf)
 		.control = edcl_control(0, 0, 0)
 	};
 
-	edcl_platform_init(ifname, chip_conf);
+	if (0 != edcl_platform_init(ifname, chip_conf))
+        return false;
 
 	struct EdclPacket rs;
 
-	if(edcl_send(&rq, sizeof(rq))) {
+	int ret;
+	ret = edcl_send(&rq, sizeof(rq));
+	if (ret) {
 		fprintf(stderr, "edcl_init: Failed to send pkt\n");
-		is_init = false;
-	}else if(edcl_recv(&rs, sizeof(rs)) && rs.address == rq.address && edcl_len(&rs) == edcl_len(&rq)) {
-		seq = edcl_seq(&rs);
-		initialized++;
-		is_init = true;
+		return false;
 	}
 
-	return is_init;
+	ret = edcl_recv(&rs, sizeof(rs));
+	if (ret && rs.address == rq.address && edcl_len(&rs) == edcl_len(&rq)) {
+		seq = edcl_seq(&rs);
+		initialized++;
+		return true;
+	}
+
+	return false;
 }
 
 const char* edcl_init(const char* ifname) {
