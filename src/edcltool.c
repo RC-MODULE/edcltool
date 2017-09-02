@@ -8,9 +8,9 @@
 #include <unistd.h>
 #include <libgen.h>
 #include <edcl.h>
-#include <sys/errno.h>
 
 #ifndef EDCL_WINDOWS
+#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <readline/readline.h>
 #include <readline/history.h>

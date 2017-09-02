@@ -11,7 +11,6 @@
 #include <windows.h>
 #include <stddef.h>
 #include <iphlpapi.h>
-#include <inaddr.h>
 #include <pcap/pcap.h>
 
 #pragma pack(push)
@@ -59,7 +58,7 @@ struct S_Packet {
 
 
 static int LOCAL_IP;
-static int REMOTE_IP; 
+static int REMOTE_IP;
 static int sock;
 static pcap_t *ppcap;
 static unsigned int board_ip_addr;
@@ -82,13 +81,13 @@ struct edcl_chip_config *chip_config;
 
 /* FixMe: Use some windows definition here */
 #define ETH_FRAME_LEN 1518
-size_t edcl_platform_get_maxpacket() 
+size_t edcl_platform_get_maxpacket()
 {
 	return ETH_FRAME_LEN - sizeof(struct S_Hdr);
 }
 
 
-void edcl_platform_list_interfaces() 
+void edcl_platform_list_interfaces()
 {
 	pcap_if_t *alldevs;
 	pcap_t *res = NULL;
@@ -102,7 +101,7 @@ void edcl_platform_list_interfaces()
 	}
 	printf("ProTip(tm): If you do not see your interface here - make sure it is configured\n");
 	printf("            and has some valid IP address set.\n");
-	
+
 	pcap_freealldevs(alldevs);
 }
 
@@ -149,7 +148,7 @@ int edcl_platform_ask_interfaces(char *iface_name, size_t iface_name_max_len)
 	return 0;
 }
 
-static pcap_t *select_interface_by_id(int id) 
+static pcap_t *select_interface_by_id(int id)
 {
 	pcap_if_t *alldevs;
 	pcap_if_t *dev;
@@ -194,9 +193,9 @@ static pcap_t *select_interface_by_id(int id)
 
 int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 {
-	if (ppcap) 
+	if (ppcap)
 		return;
-	
+
 	memset(chip->local_mac, 0, MAC_ADDR_LEN);
 
 	char mac[] = { 0x14, 0xda, 0xe9, 0x5e, 0x9e, 0x9f };
@@ -222,22 +221,22 @@ int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 	psendpacket->hdr.udp.source  = chip->local_port;
 	psendpacket->hdr.udp.dest    = chip->remote_port;
 
-	ppcap = select_interface_by_id(atoi(name));	
+	ppcap = select_interface_by_id(atoi(name));
 
 	if (!ppcap) {
 		fprintf(stderr, "Couldn't open iface\n");
 		goto errfree;
 	}
-	
+
 	struct bpf_program fcode;
 	char filter[128];
 	sprintf(filter, "ether src %02X:%02X:%02X:%02X:%02X:%02X and ip proto 17 and udp[2]=%u and udp[3]=%u",
-		chip->remote_mac[0], 
-		chip->remote_mac[1], 
-		chip->remote_mac[2], 
-		chip->remote_mac[3], 
+		chip->remote_mac[0],
+		chip->remote_mac[1],
+		chip->remote_mac[2],
+		chip->remote_mac[3],
 		chip->remote_mac[4],
-		chip->remote_mac[5],  
+		chip->remote_mac[5],
 		chip->local_port & 0xFF, (chip->local_port >> 8) & 0xFF);
 	if (pcap_compile(ppcap, &fcode, filter, 1, 0xffffff) < 0) {
 		fprintf(stderr, "Failed to compile filter\n");
@@ -256,13 +255,13 @@ errfree:
 //	if (ppcap)
 //		ppcap_close(ppcap);
 	free(psendpacket);
-err: 
-	
+err:
+
 	return -1;
 }
 
 
-int edcl_platform_send(const void* data, size_t len) 
+int edcl_platform_send(const void* data, size_t len)
 {
 	memcpy(psendpacket->data, data, len);
 	return pcap_sendpacket(ppcap, (const u_char *) psendpacket, len + sizeof(struct S_Packet) - 1);
@@ -279,10 +278,9 @@ int edcl_platform_recv(void* data, size_t len)
 		fprintf(stderr, "edcl_windows: didn't receive a packet\n");
 		return -1;
 	}
-	rlen = min((header->len - sizeof(struct S_Hdr)), len);   
+	rlen = min((header->len - sizeof(struct S_Hdr)), len);
 	packet = (const struct S_Packet*) pkt_data;
 	memcpy(data, pkt_data + sizeof(struct S_Hdr), rlen);
-     
+
 	return rlen;
 }
-
