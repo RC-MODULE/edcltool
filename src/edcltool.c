@@ -37,6 +37,7 @@ void usage(char* app)
 		"-i interface      Use this interface (Number). interface=ask selection for menu\n"
 		"                  Use -l to list available network interfaces\n"
 #endif
+		"-f filename.edcl  Specify script to execute \n"
 		"-b address        Specify board address (default - 192.168.0.0) \n"
 		"-s address        Specify self address (default - 192.168.0.1) \n"
 		"-t                Enter interactive terminal mode \n"

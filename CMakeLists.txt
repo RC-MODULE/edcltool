@@ -17,7 +17,7 @@ SET(SRCS
   src/elf.c
 )
 
-if (LINUX)
+if (CMAKE_SYSTEM_NAME STREQUAL Linux)
     LIST(APPEND SRCS src/platform-linux.c)
 elseif(WIN32)
     LIST(APPEND SRCS src/platform-windows.c)
@@ -29,11 +29,11 @@ ADD_LIBRARY(edcl OBJECT ${SRCS})
 
 SET(CMAKE_C_FLAGS "-Wall -DENABLE_ELFLOAD")
 
-if (LINUX)
+if (CMAKE_SYSTEM_NAME STREQUAL Linux)
   FIND_PACKAGE(PkgConfig)
   PKG_CHECK_MODULES(ELF REQUIRED lua5.2)
   PKG_CHECK_MODULES(LUA REQUIRED libelf)
-  target_compile_definitions(edcl PUBLIC -fPIC)
+  target_compile_options(edcl PUBLIC "-fPIC")
   set(PLATFORM_BINDIR bin)
   set(PLATFORM_LIBDIR share/edcltool/${CMAKE_LIBRARY_PATH}/lib/)
 elseif(WIN32)
@@ -80,16 +80,16 @@ endif()
 
 if (NOT EDCL_PORTABLE)
   set(EDCLTOLINK edclshared)
-  if (LINUX)
-    target_compile_options(edcl PUBLIC -DLUAEXT_PREFIX='\"${CMAKE_INSTALL_PREFIX}/share/edcltool/${CMAKE_LIBRARY_PATH}/lib\"')
+  if (CMAKE_SYSTEM_NAME STREQUAL Linux)
+    add_definitions("-DLUAEXT_PREFIX=\"${CMAKE_INSTALL_PREFIX}/share/edcltool/${CMAKE_LIBRARY_PATH}/lib\"")
   elseif(WIN32)
     #We don't support shared link on win32
     set(EDCLTOLINK edclstatic)
-    target_compile_options(edcl PUBLIC "-DLUAEXT_PREFIX=$ENV{PROGRAMFILES}\\edcltool\\lib")
+    add_definitions("-DLUAEXT_PREFIX=$ENV{PROGRAMFILES}\\edcltool\\lib")
   endif()
 else()
   set(EDCLTOLINK edclstatic)
-  target_compile_options(edcl PUBLIC "-DLUAEXT_PREFIX=.\\lib")
+  add_definitions("-DLUAEXT_PREFIX=.\\lib")
 endif()
 
 
@@ -146,6 +146,7 @@ TARGET_LINK_LIBRARIES(edcltool
   ${ICON}
 )
 
+message("===> ${PLATFORM_BINDIR}")
 INSTALL(TARGETS edcldump
   DESTINATION ${PLATFORM_BINDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE SETUID
