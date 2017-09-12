@@ -11,6 +11,7 @@ enable_testing()
 include(ExternalProject)
 include(CPack)
 
+
 SET(SRCS
   src/chips.c
   src/edcl.c
@@ -89,9 +90,12 @@ if (NOT EDCL_PORTABLE)
   endif()
 else()
   set(EDCLTOLINK edclstatic)
-  add_definitions("-DLUAEXT_PREFIX=.\\lib")
+  if(WIN32)
+    add_definitions("-DLUAEXT_PREFIX=.\\lib")
+  else()
+    add_definitions("-DLUAEXT_PREFIX=\"./lib\"")
+  endif()
 endif()
-
 
 
 INCLUDE_DIRECTORIES(
@@ -146,7 +150,6 @@ TARGET_LINK_LIBRARIES(edcltool
   ${ICON}
 )
 
-message("===> ${PLATFORM_BINDIR}")
 INSTALL(TARGETS edcldump
   DESTINATION ${PLATFORM_BINDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE SETUID
@@ -167,7 +170,7 @@ INSTALL(TARGETS edcltest
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE SETUID
   )
 
-if (NOT WIN32)
+if (NOT WIN32 AND NOT EDCL_PORTABLE)
 INSTALL(TARGETS edclshared LIBRARY
         DESTINATION lib/${CMAKE_LIBRARY_PATH}
       )
