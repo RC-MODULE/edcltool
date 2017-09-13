@@ -18,8 +18,8 @@ struct edcl_chip_config {
 	int maxpayload;
 	int local_port;
 	int remote_port;
-	char local_mac[6];
-	char remote_mac[6];
+	unsigned char local_mac[6];
+	unsigned char remote_mac[6];
 	enum CHIP_ENDIANNESS endian;
 	bool need_swap
 };

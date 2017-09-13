@@ -193,8 +193,11 @@ static pcap_t *select_interface_by_id(int id)
 
 int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 {
+
 	if (ppcap)
-		return;
+		pcap_close(ppcap);
+
+	ppcap = select_interface_by_id(atoi(name));
 
 	memset(chip->local_mac, 0, MAC_ADDR_LEN);
 
@@ -221,8 +224,6 @@ int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 	psendpacket->hdr.udp.source  = chip->local_port;
 	psendpacket->hdr.udp.dest    = chip->remote_port;
 
-	ppcap = select_interface_by_id(atoi(name));
-
 	if (!ppcap) {
 		fprintf(stderr, "Couldn't open iface\n");
 		goto errfree;
@@ -240,6 +241,8 @@ int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 		chip->local_port & 0xFF, (chip->local_port >> 8) & 0xFF);
 	if (pcap_compile(ppcap, &fcode, filter, 1, 0xffffff) < 0) {
 		fprintf(stderr, "Failed to compile filter\n");
+		/* If we don't nullify ppcap with no compiled filter - this shit will segfault */
+		ppcap = NULL;
 		goto errfree;
 	}
 
@@ -247,16 +250,13 @@ int edcl_platform_init(const char* name, struct edcl_chip_config *chip)
 		fprintf(stderr, "Failed to set filter\n");
 		goto errfree;
 	}
-
 	memcpy(psendpacket->hdr.eth.h_source, chip->local_mac, MAC_ADDR_LEN);
-
 	return 0;
 errfree:
-//	if (ppcap)
-//		ppcap_close(ppcap);
+	if (ppcap)
+		pcap_close(ppcap);
 	free(psendpacket);
 err:
-
 	return -1;
 }
 
