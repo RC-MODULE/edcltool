@@ -19,7 +19,7 @@ struct edcl_chip_config g_edcl_chips[] = {
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
                 .remote_mac ={ 0xec,			0x17, 0x66, 0x77, 0x05, 0x00 },
-                .endian = ENDIAN_BIG
+                .endian = ENDIAN_LITTLE
         },
         {
                 .name = "MM7705MPW",
@@ -29,7 +29,7 @@ struct edcl_chip_config g_edcl_chips[] = {
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
                 .remote_mac ={ 0xec,			0x17, 0x66, 0x77, 0x05, 0x04 },
-                .endian = ENDIAN_BIG
+                .endian = ENDIAN_LITTLE
         },
         /* 100 Mbit # 0*/
         {
@@ -40,7 +40,7 @@ struct edcl_chip_config g_edcl_chips[] = {
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
                 .remote_mac ={ 0xec, 0x17, 0x66, 0x00, 0x00, 0x02 },
-                .endian = ENDIAN_BIG
+                .endian = ENDIAN_LITTLE
         },
         /* 100 Mbit # 1*/
         {
@@ -51,7 +51,7 @@ struct edcl_chip_config g_edcl_chips[] = {
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
                 .remote_mac ={ 0xec, 0x17, 0x66, 0x00, 0x00, 0x03 },
-                .endian = ENDIAN_BIG
+                .endian = ENDIAN_LITTLE
         },
         /* 100 Mbit # 1*/
         {
@@ -62,7 +62,7 @@ struct edcl_chip_config g_edcl_chips[] = {
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
                 .remote_mac ={ 0xec, 0x17, 0x66, 0x00, 0x00, 0x00 },
-                .endian = ENDIAN_BIG
+                .endian = ENDIAN_LITTLE
         },
         /* Gbit # 0*/
         {
@@ -73,7 +73,7 @@ struct edcl_chip_config g_edcl_chips[] = {
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
                 .remote_mac ={ 0xec, 0x17, 0x66, 0x77, 0x05, 0x01 },
-                .endian = ENDIAN_BIG
+                .endian = ENDIAN_LITTLE
         },
 
         {
@@ -84,7 +84,7 @@ struct edcl_chip_config g_edcl_chips[] = {
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
                 .remote_mac ={ 0xec, 0x17, 0x66, 0x77, 0x05, 0x00 },
-                .endian = ENDIAN_BIG
+                .endian = ENDIAN_LITTLE
         },
         {
                 /* sentinel */
