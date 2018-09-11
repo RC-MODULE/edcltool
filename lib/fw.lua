@@ -5,6 +5,7 @@ print(chip_name)
 local fw = {
   ["K1879XB"] = require("fw_k1879"),
   ["MM7705MPW"] = require("fw_mm7705"),
+  ["1888ТХ018"] = require("fw_mm7705"),
 }
 
 local ret = fw[chip_name]

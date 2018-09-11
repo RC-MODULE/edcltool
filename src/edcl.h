@@ -13,6 +13,7 @@ enum CHIP_ENDIANNESS
 
 struct edcl_chip_config {
 	char* name;
+    char *comment;
 	char* board_addr;
 	char* host_addr;
 	int maxpayload;

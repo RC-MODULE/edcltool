@@ -152,7 +152,10 @@ int edcl_platform_recv(void* data, size_t len) {
 
 	for(;;) {
 		fd_set rdset;
-		struct timeval timeout = {.tv_sec = 1};
+		struct timeval timeout = {
+            .tv_sec = 0,
+            .tv_usec = 100000
+        };
 
 		FD_ZERO(&rdset);
 		FD_SET(sock, &rdset);

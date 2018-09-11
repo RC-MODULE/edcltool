@@ -3,6 +3,7 @@
 struct edcl_chip_config g_edcl_chips[] = {
         {
                 .name = "K1879XB",
+                .comment = "MB77.07 & others",
                 .board_addr = "192.168.0.0",
                 .host_addr = "192.168.0.1",
                 .maxpayload = 456,
@@ -13,38 +14,40 @@ struct edcl_chip_config g_edcl_chips[] = {
         },
         {
                 .name = "MM7705MPW",
+                .comment = "eth0",
                 .board_addr = "192.168.0.48",
                 .host_addr = "192.168.0.1",
                 .maxpayload = 456,
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
-                .remote_mac ={ 0xec,			0x17, 0x66, 0x77, 0x05, 0x00 },
-                .endian = ENDIAN_LITTLE
+                .remote_mac ={ 0xec,			0x17, 0x66, 0x77, 0x04, 0x00 },
+                .endian = ENDIAN_BIG
         },
         {
                 .name = "MM7705MPW",
+                .comment = "eth1",
                 .board_addr = "192.168.0.52",
                 .host_addr = "192.168.0.1",
                 .maxpayload = 456,
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
-                .remote_mac ={ 0xec,			0x17, 0x66, 0x77, 0x05, 0x04 },
-                .endian = ENDIAN_LITTLE
+                .remote_mac ={ 0xec,			0x17, 0x66, 0x77, 0x04, 0x04 },
+                .endian = ENDIAN_BIG
         },
-        /* 100 Mbit # 0*/
         {
                 .name = "1888ТХ018",
+                .comment = "Greth 100Mbit #0",
                 .board_addr = "192.168.1.2",
-                .host_addr = "192.168.1.1",
+                .host_addr = "192.168.0.1",
                 .maxpayload = 456,
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
                 .remote_mac ={ 0xec, 0x17, 0x66, 0x00, 0x00, 0x02 },
                 .endian = ENDIAN_LITTLE
         },
-        /* 100 Mbit # 1*/
         {
                 .name = "1888ТХ018",
+                .comment = "Greth 100Mbit #1",
                 .board_addr = "192.168.1.3",
                 .host_addr = "192.168.1.1",
                 .maxpayload = 456,
@@ -53,33 +56,33 @@ struct edcl_chip_config g_edcl_chips[] = {
                 .remote_mac ={ 0xec, 0x17, 0x66, 0x00, 0x00, 0x03 },
                 .endian = ENDIAN_LITTLE
         },
-        /* 100 Mbit # 1*/
         {
                 .name = "1888ТХ018",
+                .comment = "Greth 100Mbit #2",
                 .board_addr = "192.168.1.0",
-                .host_addr = "192.168.1.1",
+                .host_addr = "192.168.0.1",
                 .maxpayload = 456,
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
                 .remote_mac ={ 0xec, 0x17, 0x66, 0x00, 0x00, 0x00 },
                 .endian = ENDIAN_LITTLE
         },
-        /* Gbit # 0*/
         {
                 .name = "1888ТХ018",
+                .comment = "Greth 1Gbit #0",
                 .board_addr = "192.168.1.49",
-                .host_addr = "192.168.1.1",
+                .host_addr = "192.168.0.1",
                 .maxpayload = 456,
                 .local_port = 0x8088,
                 .remote_port = 0x9099,
                 .remote_mac ={ 0xec, 0x17, 0x66, 0x77, 0x05, 0x01 },
                 .endian = ENDIAN_LITTLE
         },
-
         {
                 .name = "1888ТХ018",
+                .comment = "Greth 1Gbit #1",
                 .board_addr = "192.168.1.48",
-                .host_addr = "192.168.1.1",
+                .host_addr = "192.168.0.1",
                 .maxpayload = 456,
                 .local_port = 0x8088,
                 .remote_port = 0x9099,

@@ -113,7 +113,7 @@ const char* edcl_init(const char* ifname) {
 		edcl_set_swap_need_flag(chip_config);
 		//Check endianness
 		if(edcl_test_init(ifname, chip_config)) {
-			printf("Detected %s target IP %s\n", i->name, i->board_addr);
+			printf("Detected %s target IP %s (%s)\n", i->name, i->board_addr, i->comment);
       		ret = i->name;
       		break;
     	}

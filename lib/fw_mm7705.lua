@@ -2,7 +2,7 @@
 local fw = {}
 
 --local bootheader_magic_host_image_valid = 0xdeadc0de
-local bootheader_magic_host_image_valid = 0xdec0adde
+local bootheader_magic_host_image_valid = 0xdeadc0de
 local im0 = 0x00040000
 
 fw.run_code = function(file, slavemode)
