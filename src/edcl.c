@@ -93,7 +93,7 @@ bool edcl_test_init(const char* ifname, struct edcl_chip_config* chip_conf)
 	}
 
 	ret = edcl_recv(&rs, sizeof(rs));
-	if (ret && rs.address == rq.address && edcl_len(&rs) == edcl_len(&rq)) {
+	if ((ret >=0) && rs.address == rq.address && edcl_len(&rs) == edcl_len(&rq)) {
 		seq = edcl_seq(&rs);
 		initialized++;
 		return true;
