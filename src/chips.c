@@ -90,6 +90,28 @@ struct edcl_chip_config g_edcl_chips[] = {
                 .endian = ENDIAN_LITTLE
         },
         {
+                .name = "1888BM018",
+                .comment = "Greth #1",
+                .board_addr = "192.168.1.48",
+                .host_addr = "192.168.0.1",
+                .maxpayload = 456,
+                .local_port = 0x8088,
+                .remote_port = 0x9099,
+                .remote_mac ={ 0xec, 0x17, 0x66, 0xe, 0x10, 0x00 },
+                .endian = ENDIAN_LITTLE
+        },
+                {
+                .name = "1888BM018",
+                .comment = "Greth #2",
+                .board_addr = "192.168.1.49",
+                .host_addr = "192.168.0.1",
+                .maxpayload = 456,
+                .local_port = 0x8088,
+                .remote_port = 0x9099,
+                .remote_mac ={ 0xec, 0x17, 0x66, 0xe, 0x10, 0x01 },
+                .endian = ENDIAN_LITTLE
+        },
+        {
                 /* sentinel */
         }
 };
